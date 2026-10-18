@@ -12,6 +12,7 @@ Um guia para descobrir onde comer em São Paulo com filtros de culinária, orça
 - Filtros por culinária, texto, distância e orçamento; resultados paginados em lotes de 50.
 - Localização do navegador somente depois de a pessoa tocar em **Alterar** e permitir o acesso.
 - Lugares salvos no armazenamento local do navegador, sem conta de usuário.
+- Fotos ilustrativas locais por culinária nos cards sem imagem própria, identificadas como ilustração; elas não representam estabelecimentos específicos.
 - Interpretação local de frases em português. A interpretação por OpenAI é opcional e precisa de uma chave de API no servidor.
 - Atribuição ao OpenStreetMap e link para a origem de cada local.
 
@@ -100,3 +101,4 @@ O projeto ainda não tem uma suíte automatizada de testes funcionais. Veja [Des
 ## Créditos dos dados
 
 © OpenStreetMap contributors. Dados sob [Open Database License (ODbL)](https://opendatacommons.org/licenses/odbl/). A aplicação mantém a atribuição visível e oferece links para os registros de origem.
+

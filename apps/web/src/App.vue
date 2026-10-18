@@ -23,6 +23,23 @@ const favoritesOnly = ref(false);
 const pageFilters = ref({ cuisine: "", maxBudget: 60, q: "" });
 const pageSize = 50;
 const cuisines = ["Todos", "Japonesa", "Italiana", "Brasileira", "Árabe", "Hambúrguer", "Vegetariana", "Chinesa", "Mexicana", "Indiana", "Mediterrânea", "Cafeteria", "Bar", "Não informada"];
+const cuisineImages = [
+  ["japonesa|sushi|ramen|izakaya|teppanyaki|sashimi", "japonesa"],
+  ["italiana|pizza|pasta|pizzeria", "italiana"],
+  ["brasileira|brasil|churrasco|mineira|baiana|feijoada", "brasileira"],
+  ["arabe|libanesa|siria|middle eastern|falafel|shawarma|mediterranea|grega|turca", "arabe"],
+  ["hamburguer|burger", "hamburguer"],
+  ["vegetariana|vegana|vegan|vegetarian", "vegetariana"],
+  ["chinesa|chinese", "chinesa"],
+  ["mexicana|taco|burrito", "mexicana"],
+  ["indiana|curry", "indiana"],
+  ["cafeteria|cafe|coffee|cha", "cafeteria"]
+];
+function cuisineImage(cuisine) {
+  const normalized = String(cuisine || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const match = cuisineImages.find(([terms]) => new RegExp(`(?:^|\\b)(?:${terms})(?:\\b|$)`, "i").test(normalized));
+  return `/images/${match?.[1] || "generica"}.webp`;
+}
 const title = computed(() => favoritesOnly.value ? "Seus lugares salvos" : items.value.length + (items.value.length === 1 ? " lugar encontrado" : " lugares encontrados"));
 const hasKnownPrice = computed(() => (favoritesOnly.value ? [...favoriteItems.value.values()] : items.value).some((item) => item.price_per_person != null));
 const hasKnownRating = computed(() => (favoritesOnly.value ? [...favoriteItems.value.values()] : items.value).some((item) => item.rating != null));
@@ -171,10 +188,10 @@ onMounted(async () => {
           <h1>Boa comida.<br /><em>Boa escolha.</em></h1>
           <p>Descubra lugares para comer por culinária, distância e orçamento. Informações ausentes ficam claras, sem preço ou avaliação inventados.</p>
         </div>
-        <div class="hero-points" aria-label="Como o guia ajuda">
-          <div><span>01</span><p><strong>Lugares reais</strong><small>Mapeados em São Paulo</small></p></div>
-          <div><span>02</span><p><strong>Busca simples</strong><small>Comida, bairro e distância</small></p></div>
-          <div><span>03</span><p><strong>Informação honesta</strong><small>Preço só quando cadastrado</small></p></div>
+        <div class="hero-food">
+          <img src="/images/japonesa.webp" alt="Sushi e sashimi, imagem ilustrativa de culinária japonesa" fetchpriority="high" />
+          <span class="hero-food-note">Imagem ilustrativa</span>
+          <div class="hero-food-caption"><small>Um sabor da cidade</small><strong>Culinária japonesa</strong></div>
         </div>
       </section>
 
@@ -207,8 +224,8 @@ onMounted(async () => {
         <div v-else-if="sorted.length" class="cards">
           <article v-for="(item,index) in sorted" :key="item.id" class="card">
             <div class="photo" :class="'photo-'+(index%6)">
-              <img v-if="item.image_url" :src="item.image_url" :alt="'Imagem de '+item.name" loading="lazy" />
-              <div v-else class="food-placeholder"><span class="food-icon"><Utensils :size="23" /></span><span>{{ item.cuisine }}</span></div>
+              <img :src="item.image_url || cuisineImage(item.cuisine)" :alt="item.image_url ? 'Foto de '+item.name : 'Imagem ilustrativa de culinária '+(item.cuisine || 'variada')" loading="lazy" decoding="async" />
+              <span v-if="!item.image_url" class="photo-note">Imagem ilustrativa</span>
               <button class="heart" :aria-label="favorites.has(item.id)?'Remover dos salvos':'Salvar restaurante'" @click="toggleFavorite(item)"><Heart :size="18" :fill="favorites.has(item.id)?'currentColor':'none'" /></button>
               <b class="price">{{ item.price_per_person != null ? money(item.price_per_person) : "Preço não informado" }} <small v-if="item.price_per_person != null">/ pessoa</small></b>
             </div>
@@ -248,3 +265,4 @@ onMounted(async () => {
     </div>
   </div>
 </template>
+

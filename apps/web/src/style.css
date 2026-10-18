@@ -173,33 +173,31 @@ main {
   line-height: 1.75;
 }
 
-.hero-points {
-  padding: 8px 20px;
-  border: 1px solid #dfe5de;
-  border-radius: 13px;
-  background: rgb(255 255 255 / 62%);
+.hero-food {
+  min-width: 0;
+  min-height: 242px;
+  position: relative;
+  align-self: stretch;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 72%);
+  border-radius: 16px;
+  background: #d7c2a4;
+  box-shadow: 0 12px 28px rgb(32 49 39 / 10%);
 }
 
-.hero-points > div {
-  display: grid;
-  grid-template-columns: 33px minmax(0, 1fr);
-  align-items: center;
-  gap: 12px;
-  padding: 14px 0;
+.hero-food::after {
+  position: absolute;
+  inset: 40% 0 0;
+  background: linear-gradient(transparent, rgb(19 29 23 / 66%));
+  content: "";
+  pointer-events: none;
 }
 
-.hero-points > div + div { border-top: 1px solid var(--line); }
-
-.hero-points > div > span {
-  color: #8a9a8d;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-}
-
-.hero-points p { margin: 0; }
-.hero-points strong { display: block; font-size: 13px; font-weight: 700; }
-.hero-points small { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
+.hero-food > img { width: 100%; height: 100%; position: absolute; inset: 0; display: block; object-fit: cover; }
+.hero-food-note { position: absolute; z-index: 1; top: 13px; left: 13px; padding: 6px 9px; border: 1px solid rgb(255 255 255 / 58%); border-radius: 999px; background: rgb(255 255 255 / 88%); color: #48564b; font-size: 9px; font-weight: 700; }
+.hero-food-caption { position: absolute; z-index: 1; right: 17px; bottom: 16px; left: 17px; display: flex; flex-direction: column; gap: 4px; color: white; text-shadow: 0 1px 8px rgb(0 0 0 / 28%); }
+.hero-food-caption small { font-size: 10px; letter-spacing: 0.8px; text-transform: uppercase; }
+.hero-food-caption strong { font: 700 20px/1.2 "Manrope", "DM Sans", sans-serif; }
 
 .search-panel {
   position: relative;
@@ -460,6 +458,7 @@ main {
 .photo-2 { background: #f0ece7; }
 .photo-3 { background: #eaeef0; }
 .photo img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.photo-note { position: absolute; top: 10px; left: 10px; padding: 5px 8px; border: 1px solid rgb(255 255 255 / 74%); border-radius: 999px; background: rgb(255 255 255 / 88%); color: #49564d; font-size: 9px; font-weight: 600; }
 
 .food-placeholder { display: flex; flex-direction: column; align-items: center; gap: 10px; color: #728579; }
 .food-placeholder > span:last-child { max-width: calc(100% - 24px); overflow: hidden; color: #66776a; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
@@ -662,10 +661,10 @@ footer small a { color: var(--green); text-decoration: underline; text-underline
 
   .hero h1 { margin: 15px 0 11px; font-size: clamp(39px, 11vw, 53px); letter-spacing: -2.3px; }
   .hero-copy > p { font-size: 13px; line-height: 1.65; }
-  .hero-points { padding: 4px 14px; }
-  .hero-points > div { grid-template-columns: 27px minmax(0, 1fr); gap: 9px; padding: 10px 0; }
-  .hero-points strong { font-size: 12px; }
-  .hero-points small { font-size: 10px; }
+  .hero-food { min-height: 0; height: clamp(170px, 55vw, 230px); border-radius: 13px; }
+  .hero-food-note { top: 10px; left: 10px; font-size: 8px; }
+  .hero-food-caption { right: 13px; bottom: 13px; left: 13px; }
+  .hero-food-caption strong { font-size: 17px; }
 
   .search-panel { margin: 16px 0 42px; padding: 17px 14px 13px; border-radius: 13px; }
   .search-heading { margin-bottom: 12px; }

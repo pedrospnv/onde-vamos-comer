@@ -4,7 +4,7 @@
 
 A interface usa uma hierarquia editorial simples e cores discretas: fundo claro, verde escuro para ações e um acento quente nos detalhes. O conteúdo prioriza busca, filtros e informações verificáveis, sem mascote, personagem ou efeitos visuais associados a uma IA.
 
-Quando o banco não tem preço, nota ou imagem, a tela não cria um valor ou uma fotografia fictícia. Campos ausentes recebem rótulos explícitos; os cards usam um marcador neutro.
+Quando o banco tem uma imagem de origem, ela aparece no card. Sem essa imagem, o card usa uma foto ilustrativa local correspondente à culinária e deixa isso indicado sobre a foto. A foto de culinária japonesa também aparece no hero; não representa um restaurante específico. Preço e avaliação ausentes continuam claramente sinalizados.
 
 ## Comportamento por tela
 
@@ -16,7 +16,8 @@ Quando o banco não tem preço, nota ou imagem, a tela não cria um valor ou uma
 
 ## Área para melhorias futuras
 
-- Imagens reais autorizadas ou fornecidas pelos estabelecimentos.
+- Imagens reais autorizadas ou fornecidas pelos estabelecimentos para substituir as ilustrações.
 - Preços e avaliações de uma fonte licenciada e atualizada.
 - Testes automatizados em larguras comuns e leitores de tela.
 - Navegação por mapa e fluxos de cadastro, caso façam parte do escopo futuro.
+
