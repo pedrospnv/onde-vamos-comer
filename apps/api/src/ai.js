@@ -15,7 +15,7 @@ function localInterpretation(message) {
   return {
     cuisine: cuisine ? cuisine[0] : null,
     maxBudget: price ? Number(price[1].replace(",", ".")) : null,
-    searchText: null,
+    searchText: !cuisine && !price ? message.trim() : null,
     aiEnabled: false
   };
 }

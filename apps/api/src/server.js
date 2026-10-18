@@ -83,7 +83,7 @@ app.get(/^(?!\/api).*/, (_req, res, next) => {
 
 app.use((error, _req, res, _next) => {
   console.error(error);
-  res.status(500).json({ error: error.message || "Ocorreu um erro inesperado." });
+  res.status(500).json({ error: "Ocorreu um erro inesperado. Tente novamente." });
 });
 
 app.listen(port, "0.0.0.0", () => console.log("API disponível na porta " + port));
