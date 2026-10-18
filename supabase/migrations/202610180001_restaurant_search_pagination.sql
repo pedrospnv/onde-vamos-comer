@@ -1,6 +1,6 @@
 drop function if exists public.search_restaurants(text, numeric, text, double precision, double precision, double precision, integer);
 
-create function public.search_restaurants(
+create or replace function public.search_restaurants(
   p_cuisine text default null,
   p_max_budget numeric default null,
   p_search text default null,
