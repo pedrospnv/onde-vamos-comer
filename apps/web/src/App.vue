@@ -4,6 +4,7 @@ import { ArrowRight, ArrowUpRight, Check, ChevronDown, Clock3, Compass, Heart, M
 
 const items = ref([]);
 const busy = ref(false);
+const hasMore = ref(false);
 const error = ref("");
 const query = ref("");
 const interpretedQuery = ref(false);
@@ -21,6 +22,8 @@ const filtersOpen = ref(false);
 const detail = ref(null);
 const sortBy = ref("recommended");
 const favoritesOnly = ref(false);
+const pageFilters = ref({ cuisine: "", maxBudget: 60, q: "" });
+const pageSize = 50;
 const cuisines = ["Todos", "Japonesa", "Italiana", "Brasileira", "Árabe", "Hambúrguer", "Vegetariana", "Chinesa", "Mexicana", "Indiana", "Mediterrânea", "Cafeteria", "Bar", "Não informada"];
 const title = computed(() => favoritesOnly.value ? "Seus lugares salvos" : items.value.length + (items.value.length === 1 ? " lugar que combina com você" : " lugares que combinam com você"));
 const sorted = computed(() => {
@@ -42,17 +45,24 @@ async function loadMeta() {
 }
 
 async function search(options = {}) {
+  const append = Boolean(options.append);
   busy.value = true;
   error.value = "";
-  aiUsed.value = false;
-  aiFallback.value = false;
+  if (!append) {
+    aiUsed.value = false;
+    aiFallback.value = false;
+    hasMore.value = false;
+  }
   try {
     const params = new URLSearchParams();
     const kind = options.cuisine ?? (cuisine.value || (activeCuisine.value !== "Todos" ? activeCuisine.value : ""));
     const max = options.maxBudget ?? Number(budget.value);
+    const searchText = options.q ?? (query.value.trim() && !interpretedQuery.value ? query.value.trim() : "");
     if (kind) params.set("cuisine", kind);
     if (max) params.set("maxBudget", String(max));
-    if (query.value.trim() && !interpretedQuery.value) params.set("q", query.value.trim());
+    if (searchText) params.set("q", searchText);
+    params.set("limit", String(pageSize));
+    params.set("offset", String(append ? items.value.length : 0));
     if (place.value) {
       params.set("lat", String(place.value.lat));
       params.set("lng", String(place.value.lng));
@@ -61,7 +71,9 @@ async function search(options = {}) {
     const response = await fetch("/api/restaurants?" + params.toString());
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Não foi possível buscar lugares.");
-    items.value = data.items;
+    items.value = append ? [...items.value, ...data.items] : data.items;
+    hasMore.value = data.items.length === pageSize;
+    if (!append) pageFilters.value = { cuisine: kind, maxBudget: max, q: searchText };
     mode.value = data.dataMode;
   } catch (err) { error.value = err.message; }
   finally { busy.value = false; }
@@ -71,6 +83,7 @@ async function askAi() {
   if (!query.value.trim()) return search();
   busy.value = true;
   error.value = "";
+  hasMore.value = false;
   try {
     const response = await fetch("/api/recommend", {
       method: "POST", headers: { "Content-Type": "application/json" },
@@ -86,15 +99,27 @@ async function askAi() {
     cuisine.value = data.filters.cuisine || "";
     activeCuisine.value = data.filters.cuisine || "Todos";
     if (data.filters.maxBudget != null) budget.value = data.filters.maxBudget;
+    pageFilters.value = {
+      cuisine: data.filters.cuisine || "",
+      maxBudget: data.filters.maxBudget ?? Number(budget.value),
+      q: data.filters.searchText || ""
+    };
+    hasMore.value = data.items.length === pageSize;
   } catch (err) { error.value = err.message; }
   finally { busy.value = false; }
 }
 
 function setCuisine(value) {
+  query.value = "";
+  interpretedQuery.value = false;
+  aiUsed.value = false;
+  aiFallback.value = false;
   activeCuisine.value = value;
   cuisine.value = value === "Todos" ? "" : value;
   search();
 }
+
+function loadMore() { search({ ...pageFilters.value, append: true }); }
 
 function toggleFavorite(item) {
   const next = new Set(favorites.value);
@@ -206,7 +231,8 @@ onMounted(async () => {
             </div>
           </article>
         </div>
-        <div v-else-if="!busy" class="empty"><span>{{ favoritesOnly ? "♡" : "🍽️" }}</span><h3>{{ favoritesOnly ? "Você ainda não salvou nenhum lugar" : mode === 'not_configured' ? "A base ainda não foi configurada" : "Nenhum lugar encontrado com esses filtros" }}</h3><p>{{ favoritesOnly ? "Toque no coração de um restaurante para guardá-lo aqui." : mode === 'not_configured' ? "Conecte o projeto Supabase e carregue os dados do município de São Paulo." : "Tente aumentar o orçamento ou escolher outra culinária." }}</p><button v-if="!favoritesOnly && mode !== 'not_configured'" @click="budget=100;cuisine='';activeCuisine='Todos';query='';search()">Limpar filtros</button><button v-else-if="favoritesOnly" @click="favoritesOnly=false">Voltar aos restaurantes</button></div>
+        <button v-if="hasMore && !busy && !favoritesOnly" class="more" @click="loadMore">Carregar mais lugares <ArrowRight :size="15" /></button>
+        <div v-if="!busy && !sorted.length" class="empty"><span>{{ favoritesOnly ? "♡" : "🍽️" }}</span><h3>{{ favoritesOnly ? "Você ainda não salvou nenhum lugar" : mode === 'not_configured' ? "A base ainda não foi configurada" : "Nenhum lugar encontrado com esses filtros" }}</h3><p>{{ favoritesOnly ? "Toque no coração de um restaurante para guardá-lo aqui." : mode === 'not_configured' ? "Conecte o projeto Supabase e carregue os dados do município de São Paulo." : "Tente aumentar o orçamento ou escolher outra culinária." }}</p><button v-if="!favoritesOnly && mode !== 'not_configured'" @click="budget=100;cuisine='';activeCuisine='Todos';query='';search()">Limpar filtros</button><button v-else-if="favoritesOnly" @click="favoritesOnly=false">Voltar aos restaurantes</button></div>
       </section>
 
       <section class="how">

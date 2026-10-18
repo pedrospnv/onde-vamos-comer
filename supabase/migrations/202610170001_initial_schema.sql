@@ -47,7 +47,8 @@ create or replace function public.search_restaurants(
   p_lat double precision default null,
   p_lng double precision default null,
   p_radius_km double precision default 15,
-  p_limit integer default 30
+  p_limit integer default 30,
+  p_offset integer default 0
 )
 returns table (
   id uuid, name text, slug text, cuisine text, description text,
@@ -102,8 +103,9 @@ as $$
     else 0 end,
     r.rating desc nulls last,
     r.price_per_person asc nulls last
-  limit greatest(1, least(coalesce(p_limit, 30), 100));
+  limit greatest(1, least(coalesce(p_limit, 30), 100))
+  offset greatest(0, least(coalesce(p_offset, 0), 10000));
 $$;
 
-grant execute on function public.search_restaurants(text, numeric, text, double precision, double precision, double precision, integer)
+grant execute on function public.search_restaurants(text, numeric, text, double precision, double precision, double precision, integer, integer)
   to anon, authenticated;

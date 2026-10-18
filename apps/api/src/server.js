@@ -18,6 +18,8 @@ const filtersSchema = z.object({
   cuisine: z.string().trim().max(60).optional().nullable(),
   maxBudget: z.coerce.number().positive().max(10000).optional().nullable(),
   q: z.string().trim().max(120).optional().nullable(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+  offset: z.coerce.number().int().min(0).max(10000).optional(),
   lat: z.coerce.number().min(-90).max(90).optional(),
   lng: z.coerce.number().min(-180).max(180).optional(),
   radiusKm: z.coerce.number().min(1).max(100).optional()

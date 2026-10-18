@@ -18,7 +18,8 @@ export async function searchRestaurants(filters = {}) {
     p_lat: filters.lat ?? null,
     p_lng: filters.lng ?? null,
     p_radius_km: filters.radiusKm || 45,
-    p_limit: 50
+    p_limit: filters.limit ?? 50,
+    p_offset: filters.offset ?? 0
   });
   if (error) {
     console.error("Busca Supabase falhou:", error.message);
