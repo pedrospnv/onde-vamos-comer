@@ -83,7 +83,8 @@ app.get(/^(?!\/api).*/, (_req, res, next) => {
 
 app.use((error, _req, res, _next) => {
   console.error(error);
-  res.status(500).json({ error: "Ocorreu um erro inesperado. Tente novamente." });
+  const status = Number.isInteger(error.status) && error.status >= 400 && error.status < 500 ? error.status : 500;
+  res.status(status).json({ error: status < 500 ? "Requisição inválida." : "Ocorreu um erro inesperado. Tente novamente." });
 });
 
 app.listen(port, "0.0.0.0", () => console.log("API disponível na porta " + port));

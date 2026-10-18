@@ -4,6 +4,7 @@ import { demoRestaurants } from "./demo-data.js";
 const url = process.env.SUPABASE_URL;
 const key = process.env.SUPABASE_PUBLISHABLE_KEY;
 const supabase = url && key ? createClient(url, key, { auth: { persistSession: false } }) : null;
+let currentDataMode = supabase ? "checking" : "demo";
 
 function distanceKm(a, b, c, d) {
   const rad = (v) => v * Math.PI / 180;
@@ -37,15 +38,20 @@ export async function searchRestaurants(filters = {}) {
       p_radius_km: filters.radiusKm || 15,
       p_limit: 30
     });
-    if (!error) return data || [];
+    if (!error) {
+      currentDataMode = "supabase";
+      return data || [];
+    }
     console.error("Busca Supabase falhou:", error.message);
     if (process.env.DEMO_MODE !== "true") throw new Error("Não foi possível consultar os restaurantes.");
+    currentDataMode = "demo";
   } else if (process.env.DEMO_MODE !== "true") {
     throw new Error("Configure Supabase URL e publishable key.");
   }
+  currentDataMode = "demo";
   return localSearch(filters);
 }
 
 export async function dataMode() {
-  return supabase ? "supabase" : "demo";
+  return currentDataMode;
 }

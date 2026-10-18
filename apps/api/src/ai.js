@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 const cuisineTerms = [
   ["Japonesa", ["japonesa", "japonês", "japones", "sushi", "temaki", "ramen"]],
   ["Italiana", ["italiana", "italiano", "pizza", "massa", "macarrão"]],
@@ -20,12 +22,19 @@ function localInterpretation(message) {
   };
 }
 
+const filtersSchema = z.object({
+  cuisine: z.string().trim().max(60).nullable(),
+  maxBudget: z.number().positive().max(10000).nullable(),
+  searchText: z.string().trim().max(120).nullable()
+});
+
 export async function interpretRequest(message) {
   if (!process.env.OPENAI_API_KEY) return localInterpretation(message);
   try {
     const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: { Authorization: "Bearer " + process.env.OPENAI_API_KEY, "Content-Type": "application/json" },
+      signal: AbortSignal.timeout(12_000),
       body: JSON.stringify({
         model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
         input: [
@@ -48,7 +57,9 @@ export async function interpretRequest(message) {
     const data = await response.json();
     const text = data.output?.flatMap((item) => item.content || []).find((item) => item.type === "output_text")?.text;
     if (!text) throw new Error("Resposta estruturada ausente");
-    return { ...JSON.parse(text), aiEnabled: true };
+    const parsed = filtersSchema.safeParse(JSON.parse(text));
+    if (!parsed.success) throw new Error("Filtros estruturados inválidos");
+    return { ...parsed.data, aiEnabled: true };
   } catch (error) {
     console.error("Falha na interpretação por IA; usando filtros locais:", error.message);
     return localInterpretation(message);
