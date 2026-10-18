@@ -6,6 +6,7 @@ const items = ref([]);
 const busy = ref(false);
 const error = ref("");
 const query = ref("");
+const interpretedQuery = ref(false);
 const cuisine = ref("");
 const budget = ref(60);
 const mode = ref("demo");
@@ -15,6 +16,7 @@ const place = ref(null);
 const placeLabel = ref("São José dos Campos, SP");
 const activeCuisine = ref("Todos");
 const favorites = ref(new Set());
+const favoriteItems = ref(new Map());
 const filtersOpen = ref(false);
 const detail = ref(null);
 const sortBy = ref("recommended");
@@ -22,13 +24,14 @@ const favoritesOnly = ref(false);
 const cuisines = ["Todos", "Japonesa", "Italiana", "Brasileira", "Árabe", "Hambúrguer", "Havaiana", "Vegetariana"];
 const title = computed(() => favoritesOnly.value ? "Seus lugares salvos" : items.value.length + (items.value.length === 1 ? " lugar que combina com você" : " lugares que combinam com você"));
 const sorted = computed(() => {
-  const list = items.value.filter((item) => !favoritesOnly.value || favorites.value.has(item.id));
+  const list = favoritesOnly.value ? [...favoriteItems.value.values()] : [...items.value];
   if (sortBy.value === "price") return list.sort((a, b) => a.price_per_person - b.price_per_person);
   if (sortBy.value === "rating") return list.sort((a, b) => b.rating - a.rating);
   if (place.value) return list.sort((a, b) => (a.distance_km ?? Infinity) - (b.distance_km ?? Infinity));
   return list.sort((a, b) => b.rating - a.rating);
 });
 const money = (value) => Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+const foodIcon = (kind) => ({ Japonesa: "🍣", Italiana: "🍝", Brasileira: "🍛", "Árabe": "🥙", "Hambúrguer": "🍔", Havaiana: "🥗", Vegetariana: "🥗" })[kind] || "🍽️";
 
 async function loadMeta() {
   try {
@@ -49,7 +52,7 @@ async function search(options = {}) {
     const max = options.maxBudget ?? Number(budget.value);
     if (kind) params.set("cuisine", kind);
     if (max) params.set("maxBudget", String(max));
-    if (query.value.trim()) params.set("q", query.value.trim());
+    if (query.value.trim() && !interpretedQuery.value) params.set("q", query.value.trim());
     if (place.value) {
       params.set("lat", String(place.value.lat));
       params.set("lng", String(place.value.lng));
@@ -78,6 +81,7 @@ async function askAi() {
     items.value = data.items;
     mode.value = data.dataMode;
     aiUsed.value = data.filters.aiEnabled;
+    interpretedQuery.value = true;
     if (data.filters.cuisine) { cuisine.value = data.filters.cuisine; activeCuisine.value = data.filters.cuisine; }
     if (data.filters.maxBudget) budget.value = data.filters.maxBudget;
   } catch (err) { error.value = err.message; }
@@ -90,10 +94,13 @@ function setCuisine(value) {
   search();
 }
 
-function toggleFavorite(id) {
+function toggleFavorite(item) {
   const next = new Set(favorites.value);
-  if (next.has(id)) next.delete(id); else next.add(id);
+  const saved = new Map(favoriteItems.value);
+  if (next.has(item.id)) { next.delete(item.id); saved.delete(item.id); }
+  else { next.add(item.id); saved.set(item.id, item); }
   favorites.value = next;
+  favoriteItems.value = saved;
 }
 
 function findLocation() {
@@ -110,13 +117,21 @@ function mapsUrl(item) {
   return "https://www.google.com/maps/search/?api=1&query=" + item.lat + "," + item.lng;
 }
 
-function quickSearch(text) { query.value = text; askAi(); }
+function quickSearch(text) { query.value = text; interpretedQuery.value = false; askAi(); }
 function goTop() { window.scrollTo({ top: 0, behavior: "smooth" }); }
-watch(favorites, (next) => localStorage.setItem("onde-vamos-favoritos", JSON.stringify([...next])));
+watch(favoriteItems, (next) => {
+  try { localStorage.setItem("onde-vamos-favoritos", JSON.stringify([...next.values()])); } catch {}
+});
 onMounted(async () => {
-  try { favorites.value = new Set(JSON.parse(localStorage.getItem("onde-vamos-favoritos") || "[]")); } catch {}
+  let stored = [];
+  try { stored = JSON.parse(localStorage.getItem("onde-vamos-favoritos") || "[]"); } catch {}
   await loadMeta();
   await search({ cuisine: "", maxBudget: 60 });
+  const saved = new Map(stored.filter((item) => item && typeof item === "object" && item.id).map((item) => [item.id, item]));
+  const oldIds = new Set(stored.filter((item) => typeof item === "string"));
+  for (const item of items.value) if (oldIds.has(item.id)) saved.set(item.id, item);
+  favoriteItems.value = saved;
+  favorites.value = new Set(saved.keys());
 });
 </script>
 
@@ -145,7 +160,7 @@ onMounted(async () => {
       <section class="search-panel">
         <div class="search-heading"><span class="spark-icon"><Sparkles :size="17" /></span><div><strong>O que você está a fim de comer?</strong><small>Escreva do seu jeito ou escolha os filtros</small></div></div>
         <form class="search-row" @submit.prevent="askAi">
-          <Search :size="19" class="search-symbol" /><input v-model="query" placeholder="Ex.: comida japonesa até R$ 50 por pessoa" aria-label="Descreva o que procura" />
+          <Search :size="19" class="search-symbol" /><input v-model="query" @input="interpretedQuery = false" placeholder="Ex.: comida japonesa até R$ 50 por pessoa" aria-label="Descreva o que procura" />
           <button type="button" class="filter-button" @click="filtersOpen = !filtersOpen"><SlidersHorizontal :size="16" /><span>Filtros</span></button>
           <button type="submit" class="submit-button" :disabled="busy"><Sparkles :size="16" />{{ busy ? "Buscando..." : "Encontrar" }}<ArrowRight :size="15" /></button>
         </form>
@@ -171,9 +186,9 @@ onMounted(async () => {
           <article v-for="(item,index) in sorted" :key="item.id" class="card">
             <div class="photo" :class="'photo-'+(index%6)">
               <img v-if="item.image_url" :src="item.image_url" :alt="'Prato de '+item.name" loading="lazy" />
-              <div v-else class="food">{{ ['🍣','🍝','🍛','🥙','🍔','🥗'][index%6] }}</div>
+              <div v-else class="food">{{ foodIcon(item.cuisine) }}</div>
               <span v-if="index===0" class="match"><Sparkles :size="12" /> Combina com você</span>
-              <button class="heart" :aria-label="favorites.has(item.id)?'Remover dos salvos':'Salvar restaurante'" @click="toggleFavorite(item.id)"><Heart :size="18" :fill="favorites.has(item.id)?'currentColor':'none'" /></button>
+              <button class="heart" :aria-label="favorites.has(item.id)?'Remover dos salvos':'Salvar restaurante'" @click="toggleFavorite(item)"><Heart :size="18" :fill="favorites.has(item.id)?'currentColor':'none'" /></button>
               <b class="price">{{ money(item.price_per_person) }} <small>/ pessoa</small></b>
             </div>
             <div class="card-content">
