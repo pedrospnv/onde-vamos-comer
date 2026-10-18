@@ -10,8 +10,8 @@ const interpretedQuery = ref(false);
 const cuisine = ref("");
 const budget = ref(60);
 const mode = ref("demo");
-const aiEnabled = ref(false);
 const aiUsed = ref(false);
+const aiFallback = ref(false);
 const place = ref(null);
 const placeLabel = ref("São José dos Campos, SP");
 const activeCuisine = ref("Todos");
@@ -38,7 +38,6 @@ async function loadMeta() {
     const response = await fetch("/api/meta");
     const data = await response.json();
     mode.value = data.dataMode;
-    aiEnabled.value = data.aiEnabled;
   } catch {}
 }
 
@@ -46,6 +45,7 @@ async function search(options = {}) {
   busy.value = true;
   error.value = "";
   aiUsed.value = false;
+  aiFallback.value = false;
   try {
     const params = new URLSearchParams();
     const kind = options.cuisine ?? (cuisine.value || (activeCuisine.value !== "Todos" ? activeCuisine.value : ""));
@@ -81,6 +81,7 @@ async function askAi() {
     items.value = data.items;
     mode.value = data.dataMode;
     aiUsed.value = data.filters.aiEnabled;
+    aiFallback.value = !data.filters.aiEnabled;
     interpretedQuery.value = true;
     if (data.filters.cuisine) { cuisine.value = data.filters.cuisine; activeCuisine.value = data.filters.cuisine; }
     if (data.filters.maxBudget) budget.value = data.filters.maxBudget;
@@ -117,7 +118,7 @@ function mapsUrl(item) {
   return "https://www.google.com/maps/search/?api=1&query=" + item.lat + "," + item.lng;
 }
 
-function quickSearch(text) { query.value = text; interpretedQuery.value = false; askAi(); }
+function quickSearch(text) { query.value = text; interpretedQuery.value = false; aiFallback.value = false; askAi(); }
 function goTop() { window.scrollTo({ top: 0, behavior: "smooth" }); }
 watch(favoriteItems, (next) => {
   try { localStorage.setItem("onde-vamos-favoritos", JSON.stringify([...next.values()])); } catch {}
@@ -160,7 +161,7 @@ onMounted(async () => {
       <section class="search-panel">
         <div class="search-heading"><span class="spark-icon"><Sparkles :size="17" /></span><div><strong>O que você está a fim de comer?</strong><small>Escreva do seu jeito ou escolha os filtros</small></div></div>
         <form class="search-row" @submit.prevent="askAi">
-          <Search :size="19" class="search-symbol" /><input v-model="query" @input="interpretedQuery = false" placeholder="Ex.: comida japonesa até R$ 50 por pessoa" aria-label="Descreva o que procura" />
+          <Search :size="19" class="search-symbol" /><input v-model="query" @input="interpretedQuery = false; aiFallback = false; aiUsed = false" placeholder="Ex.: comida japonesa até R$ 50 por pessoa" aria-label="Descreva o que procura" />
           <button type="button" class="filter-button" @click="filtersOpen = !filtersOpen"><SlidersHorizontal :size="16" /><span>Filtros</span></button>
           <button type="submit" class="submit-button" :disabled="busy"><Sparkles :size="16" />{{ busy ? "Buscando..." : "Encontrar" }}<ArrowRight :size="15" /></button>
         </form>
@@ -180,7 +181,7 @@ onMounted(async () => {
         <div v-if="error" class="error"><span>{{ error }}</span><button @click="error = ''"><X :size="15" /></button></div>
         <div v-if="mode === 'demo'" class="demo-label"><i></i> Demonstração com restaurantes e preços fictícios. Confirme os dados antes de sair.</div>
         <div v-if="query && aiUsed" class="ai-hint"><Sparkles :size="15" /> Entendi seu pedido e encontrei opções com esses filtros.</div>
-        <div v-else-if="query && !aiEnabled" class="ai-hint fallback"><Sparkles :size="15" /> Interpretação simples em modo demonstração. Configure a chave da IA para ativar a compreensão avançada.</div>
+        <div v-else-if="query && aiFallback" class="ai-hint fallback"><Sparkles :size="15" /> A IA avançada não ficou disponível nesta busca. Use os filtros ou tente novamente.</div>
         <div v-if="busy" class="cards"><div v-for="n in 3" :key="n" class="skeleton"></div></div>
         <div v-else-if="sorted.length" class="cards">
           <article v-for="(item,index) in sorted" :key="item.id" class="card">
