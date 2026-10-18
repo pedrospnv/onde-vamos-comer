@@ -9,11 +9,11 @@ const query = ref("");
 const interpretedQuery = ref(false);
 const cuisine = ref("");
 const budget = ref(60);
-const mode = ref("demo");
+const mode = ref("not_configured");
 const aiUsed = ref(false);
 const aiFallback = ref(false);
-const place = ref(null);
-const placeLabel = ref("São José dos Campos, SP");
+const place = ref({ lat: -23.5505, lng: -46.6333, radiusKm: 45 });
+const placeLabel = ref("São Paulo, SP");
 const activeCuisine = ref("Todos");
 const favorites = ref(new Set());
 const favoriteItems = ref(new Map());
@@ -21,17 +21,17 @@ const filtersOpen = ref(false);
 const detail = ref(null);
 const sortBy = ref("recommended");
 const favoritesOnly = ref(false);
-const cuisines = ["Todos", "Japonesa", "Italiana", "Brasileira", "Árabe", "Hambúrguer", "Havaiana", "Vegetariana"];
+const cuisines = ["Todos", "Japonesa", "Italiana", "Brasileira", "Árabe", "Hambúrguer", "Vegetariana", "Chinesa", "Mexicana", "Indiana", "Mediterrânea", "Cafeteria", "Bar", "Não informada"];
 const title = computed(() => favoritesOnly.value ? "Seus lugares salvos" : items.value.length + (items.value.length === 1 ? " lugar que combina com você" : " lugares que combinam com você"));
 const sorted = computed(() => {
   const list = favoritesOnly.value ? [...favoriteItems.value.values()] : [...items.value];
-  if (sortBy.value === "price") return list.sort((a, b) => a.price_per_person - b.price_per_person);
-  if (sortBy.value === "rating") return list.sort((a, b) => b.rating - a.rating);
+  if (sortBy.value === "price") return list.sort((a, b) => (a.price_per_person ?? Infinity) - (b.price_per_person ?? Infinity));
+  if (sortBy.value === "rating") return list.sort((a, b) => (b.rating ?? -Infinity) - (a.rating ?? -Infinity));
   if (place.value) return list.sort((a, b) => (a.distance_km ?? Infinity) - (b.distance_km ?? Infinity));
-  return list.sort((a, b) => b.rating - a.rating);
+  return list.sort((a, b) => (b.rating ?? -Infinity) - (a.rating ?? -Infinity));
 });
 const money = (value) => Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
-const foodIcon = (kind) => ({ Japonesa: "🍣", Italiana: "🍝", Brasileira: "🍛", "Árabe": "🥙", "Hambúrguer": "🍔", Havaiana: "🥗", Vegetariana: "🥗" })[kind] || "🍽️";
+const foodIcon = (kind) => ({ Japonesa: "🍣", Italiana: "🍝", Brasileira: "🍛", "Árabe": "🥙", "Hambúrguer": "🍔", Vegetariana: "🥗", Chinesa: "🥡", Mexicana: "🌮", Indiana: "🍛", Cafeteria: "☕", Bar: "🍻" })[kind] || "🍽️";
 
 async function loadMeta() {
   try {
@@ -56,7 +56,7 @@ async function search(options = {}) {
     if (place.value) {
       params.set("lat", String(place.value.lat));
       params.set("lng", String(place.value.lng));
-      params.set("radiusKm", "15");
+      params.set("radiusKm", String(place.value.radiusKm || 45));
     }
     const response = await fetch("/api/restaurants?" + params.toString());
     const data = await response.json();
@@ -74,7 +74,7 @@ async function askAi() {
   try {
     const response = await fetch("/api/recommend", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: query.value, maxBudget: Number(budget.value), ...(place.value ? { lat: place.value.lat, lng: place.value.lng, radiusKm: 15 } : {}) })
+      body: JSON.stringify({ message: query.value, maxBudget: Number(budget.value), ...(place.value ? { lat: place.value.lat, lng: place.value.lng, radiusKm: place.value.radiusKm || 45 } : {}) })
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Não consegui interpretar seu pedido.");
@@ -108,7 +108,7 @@ function toggleFavorite(item) {
 function findLocation() {
   if (!navigator.geolocation) { error.value = "Seu navegador não disponibilizou a localização."; return; }
   navigator.geolocation.getCurrentPosition(({ coords }) => {
-    place.value = { lat: coords.latitude, lng: coords.longitude };
+    place.value = { lat: coords.latitude, lng: coords.longitude, radiusKm: 15 };
     placeLabel.value = "Perto de você";
     search();
   }, () => { error.value = "Não consegui acessar sua localização. Confira a permissão do navegador."; }, { timeout: 8000 });
@@ -151,13 +151,13 @@ onMounted(async () => {
       <section class="hero">
         <div class="hero-copy">
           <div class="eyebrow"><i></i> SAIA PRA COMER BEM</div>
-          <h1>Seu próximo<br />prato favorito,<br /><em>sem estourar o bolso.</em></h1>
-          <p>Conta pra gente o que deu vontade. A gente encontra um lugar que cabe no seu dia e no seu orçamento.</p>
+          <h1>Seu próximo<br />lugar pra<br /><em>comer bem.</em></h1>
+          <p>Conta pra gente o que deu vontade. A gente encontra lugares reais pela cidade e destaca os preços quando há informação disponível.</p>
         </div>
         <div class="hero-art" aria-hidden="true">
           <div class="art-sun"></div><div class="plate"><div>🍜</div></div>
-          <div class="art-note note-back"><span>R$</span><strong>bom e barato</strong><small>achado do dia</small></div>
-          <div class="art-note note-front"><span>★★★★★</span><strong>Na medida certa</strong><small>comida boa, preço justo</small></div>
+          <div class="art-note note-back"><span>PERTINHO</span><strong>achado novo</strong><small>seu próximo rolê</small></div>
+          <div class="art-note note-front"><span>SEU NOVO ACHADO</span><strong>Na medida certa</strong><small>do jeito que você gosta</small></div>
           <b class="sparkle">✳</b><b class="sparkle second">✳</b>
         </div>
       </section>
@@ -183,9 +183,11 @@ onMounted(async () => {
         </div>
         <div class="tabs"><button v-for="c in cuisines" :key="c" :class="{ active: activeCuisine === c }" @click="setCuisine(c)">{{ c }}</button></div>
         <div v-if="error" class="error"><span>{{ error }}</span><button @click="error = ''"><X :size="15" /></button></div>
-        <div v-if="mode === 'demo'" class="demo-label"><i></i> Demonstração com restaurantes e preços fictícios. Confirme os dados antes de sair.</div>
+        <div v-if="mode === 'openstreetmap'" class="demo-label"><i></i> Locais do OpenStreetMap. Preço e avaliação não informados ficam sinalizados, sem estimativas inventadas. <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a></div>
+        <div v-else-if="mode === 'not_configured'" class="demo-label"><i></i> A base de restaurantes reais ainda não foi conectada. Configure o Supabase e importe os locais de São Paulo.</div>
         <div v-if="query && aiUsed" class="ai-hint"><Sparkles :size="15" /> Entendi seu pedido e encontrei opções com esses filtros.</div>
         <div v-else-if="query && aiFallback" class="ai-hint fallback"><Sparkles :size="15" /> A IA avançada não ficou disponível nesta busca. Use os filtros ou tente novamente.</div>
+        <div v-if="items.some(item => item.price_per_person == null)" class="ai-hint fallback budget-note"><Wallet :size="15" /> Os locais sem preço cadastrado podem ultrapassar R$ {{ Number(budget).toLocaleString('pt-BR') }} por pessoa. Confirme o valor com o restaurante antes de ir.</div>
         <div v-if="busy" class="cards"><div v-for="n in 3" :key="n" class="skeleton"></div></div>
         <div v-else-if="sorted.length" class="cards">
           <article v-for="(item,index) in sorted" :key="item.id" class="card">
@@ -194,21 +196,21 @@ onMounted(async () => {
               <div v-else class="food">{{ foodIcon(item.cuisine) }}</div>
               <span v-if="index===0" class="match"><Sparkles :size="12" /> Combina com você</span>
               <button class="heart" :aria-label="favorites.has(item.id)?'Remover dos salvos':'Salvar restaurante'" @click="toggleFavorite(item)"><Heart :size="18" :fill="favorites.has(item.id)?'currentColor':'none'" /></button>
-              <b class="price">{{ money(item.price_per_person) }} <small>/ pessoa</small></b>
+              <b class="price">{{ item.price_per_person != null ? money(item.price_per_person) : "Preço não informado" }} <small v-if="item.price_per_person != null">/ pessoa</small></b>
             </div>
             <div class="card-content">
-              <div class="card-title"><div><span class="cuisine">{{ item.cuisine }}</span><h3>{{ item.name }}</h3></div><span class="rating"><Star :size="14" fill="currentColor" /> {{ Number(item.rating).toFixed(1) }}</span></div>
+              <div class="card-title"><div><span class="cuisine">{{ item.cuisine }}</span><h3>{{ item.name }}</h3></div><span v-if="item.rating != null" class="rating"><Star :size="14" fill="currentColor" /> {{ Number(item.rating).toFixed(1) }}</span><span v-else class="rating no-rating">Sem avaliação</span></div>
               <p class="description">{{ item.description }}</p>
-              <div class="meta"><span><MapPin :size="13" /> {{ item.distance_km != null ? Number(item.distance_km).toFixed(1)+' km' : item.city || 'São José dos Campos' }}</span><span><Clock3 :size="13" /> {{ item.rating_count || 0 }} avaliações</span></div>
-              <div class="card-bottom"><span><Check :size="13" /> Cabe no seu orçamento</span><button @click="detail=item">Ver detalhes <ArrowUpRight :size="14" /></button></div>
+              <div class="meta"><span><MapPin :size="13" /> {{ item.distance_km != null ? Number(item.distance_km).toFixed(1)+' km' : item.city || 'São Paulo' }}</span><span><Clock3 :size="13" /> {{ item.rating_count ? item.rating_count+' avaliações' : 'Sem avaliações' }}</span></div>
+              <div class="card-bottom"><span v-if="item.price_per_person != null"><Check :size="13" /> Preço cadastrado</span><span v-else>Confirme o preço antes de ir</span><button @click="detail=item">Ver detalhes <ArrowUpRight :size="14" /></button></div>
             </div>
           </article>
         </div>
-        <div v-else-if="!busy" class="empty"><span>{{ favoritesOnly ? "♡" : "🍽️" }}</span><h3>{{ favoritesOnly ? "Você ainda não salvou nenhum lugar" : "Nenhum lugar encontrado com esses filtros" }}</h3><p>{{ favoritesOnly ? "Toque no coração de um restaurante para guardá-lo aqui." : "Tente aumentar o orçamento ou escolher outra culinária." }}</p><button v-if="!favoritesOnly" @click="budget=100;cuisine='';activeCuisine='Todos';query='';search()">Limpar filtros</button><button v-else @click="favoritesOnly=false">Voltar aos restaurantes</button></div>
+        <div v-else-if="!busy" class="empty"><span>{{ favoritesOnly ? "♡" : "🍽️" }}</span><h3>{{ favoritesOnly ? "Você ainda não salvou nenhum lugar" : mode === 'not_configured' ? "A base ainda não foi configurada" : "Nenhum lugar encontrado com esses filtros" }}</h3><p>{{ favoritesOnly ? "Toque no coração de um restaurante para guardá-lo aqui." : mode === 'not_configured' ? "Conecte o projeto Supabase e carregue os dados do município de São Paulo." : "Tente aumentar o orçamento ou escolher outra culinária." }}</p><button v-if="!favoritesOnly && mode !== 'not_configured'" @click="budget=100;cuisine='';activeCuisine='Todos';query='';search()">Limpar filtros</button><button v-else-if="favoritesOnly" @click="favoritesOnly=false">Voltar aos restaurantes</button></div>
       </section>
 
       <section class="how">
-        <div class="how-copy"><div class="kicker">A CONTA FECHA</div><h2>Comer bem não<br />precisa ser caro.</h2><p>A gente cruza o que você quer comer com o que cabe no bolso. Sem rolar listas que não têm nada a ver com você.</p><button @click="goTop">Encontrar meu próximo lugar <ArrowRight :size="15" /></button></div>
+        <div class="how-copy"><div class="kicker">DO SEU JEITO</div><h2>Seu próximo lugar<br />começa por aqui.</h2><p>Combine culinária, bairro e orçamento quando essas informações estiverem cadastradas. Se faltar preço ou avaliação, a gente avisa para você confirmar antes de sair.</p><button @click="goTop">Encontrar meu próximo lugar <ArrowRight :size="15" /></button></div>
         <div class="steps">
           <div><span>01</span><i><MessageCircle :size="19" /></i><section><strong>Conta o que deu vontade</strong><p>Digite um prato, culinária ou descreva seu rolê.</p></section></div>
           <div><span>02</span><i><Wallet :size="19" /></i><section><strong>Escolhe seu limite</strong><p>Defina quanto quer gastar por pessoa.</p></section></div>
@@ -216,16 +218,17 @@ onMounted(async () => {
         </div>
       </section>
     </main>
-    <footer><a class="brand" href="#"><span class="brand-mark"><Utensils :size="15" /></span><span>onde<span class="brand-dot">.</span>vamos?</span></a><span>Feito pra sair da dúvida e ir direto pra mesa.</span><small>Projeto demonstrativo · Dados ilustrativos</small></footer>
+    <footer><a class="brand" href="#"><span class="brand-mark"><Utensils :size="15" /></span><span>onde<span class="brand-dot">.</span>vamos?</span></a><span>Feito pra sair da dúvida e ir direto pra mesa.</span><small>Dados de mapa © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap contributors</a> · Valores e avaliações só aparecem quando cadastrados.</small></footer>
     <div v-if="detail" class="backdrop" @click.self="detail=null">
       <section class="modal" role="dialog" aria-modal="true">
         <button class="close" aria-label="Fechar" @click="detail=null"><X :size="18" /></button><div class="modal-art">🍽️</div>
         <span class="cuisine">{{ detail.cuisine }}</span><h2>{{ detail.name }}</h2><p>{{ detail.description }}</p>
-        <div class="modal-line"><Wallet :size="16" /><b>{{ money(detail.price_per_person) }}</b><span>estimativa por pessoa</span></div>
+        <div class="modal-line"><Wallet :size="16" /><template v-if="detail.price_per_person != null"><b>{{ money(detail.price_per_person) }}</b><span>estimativa por pessoa</span></template><span v-else>Preço não informado; confirme diretamente com o restaurante.</span></div>
         <div class="modal-line"><MapPin :size="16" />{{ detail.address || detail.city }}</div>
         <div class="tag-list"><span v-for="tag in detail.tags" :key="tag">{{ tag }}</span></div>
-        <p class="disclaimer">Preço e disponibilidade podem mudar. Confirme com o restaurante antes de ir.</p>
+        <p class="disclaimer">Preço, avaliações e disponibilidade podem mudar. Confirme com o restaurante antes de ir.</p>
         <a class="map-link" :href="mapsUrl(detail)" target="_blank" rel="noreferrer">Ver no mapa <ArrowUpRight :size="15" /></a>
+        <a v-if="detail.source_url" class="source-link" :href="detail.source_url" target="_blank" rel="noreferrer">Ver este local no OpenStreetMap</a>
       </section>
     </div>
   </div>
