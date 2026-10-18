@@ -83,8 +83,9 @@ async function askAi() {
     aiUsed.value = data.filters.aiEnabled;
     aiFallback.value = !data.filters.aiEnabled;
     interpretedQuery.value = true;
-    if (data.filters.cuisine) { cuisine.value = data.filters.cuisine; activeCuisine.value = data.filters.cuisine; }
-    if (data.filters.maxBudget) budget.value = data.filters.maxBudget;
+    cuisine.value = data.filters.cuisine || "";
+    activeCuisine.value = data.filters.cuisine || "Todos";
+    if (data.filters.maxBudget != null) budget.value = data.filters.maxBudget;
   } catch (err) { error.value = err.message; }
   finally { busy.value = false; }
 }
@@ -125,7 +126,10 @@ watch(favoriteItems, (next) => {
 });
 onMounted(async () => {
   let stored = [];
-  try { stored = JSON.parse(localStorage.getItem("onde-vamos-favoritos") || "[]"); } catch {}
+  try {
+    const parsed = JSON.parse(localStorage.getItem("onde-vamos-favoritos") || "[]");
+    if (Array.isArray(parsed)) stored = parsed;
+  } catch {}
   await loadMeta();
   await search({ cuisine: "", maxBudget: 60 });
   const saved = new Map(stored.filter((item) => item && typeof item === "object" && item.id).map((item) => [item.id, item]));
