@@ -1,0 +1,30 @@
+{
+  "name": "onde-vamos-comer",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k -n api,web \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:api": "node --watch apps/api/src/server.js",
+    "dev:web": "vite --host 0.0.0.0",
+    "check:api": "node --check apps/api/src/server.js && node --check apps/api/src/ai.js && node --check apps/api/src/restaurants.js",
+    "build": "npm run check:api && vite build",
+    "start": "node apps/api/src/server.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.118.0",
+    "cors": "2.8.6",
+    "dotenv": "18.0.8",
+    "express": "5.3.0",
+    "express-rate-limit": "8.7.1",
+    "helmet": "8.3.0",
+    "@lucide/vue": "1.59.0",
+    "vue": "3.5.44",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "6.0.10",
+    "concurrently": "10.0.6",
+    "vite": "8.3.4"
+  },
+  "engines": { "node": ">=22.12" }
+}
