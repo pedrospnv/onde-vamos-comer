@@ -23,7 +23,6 @@
 html { scroll-behavior: smooth; }
 
 body {
-  min-width: 320px;
   margin: 0;
   background: var(--page);
 }
@@ -749,3 +748,4 @@ footer small a { color: var(--green); text-decoration: underline; text-underline
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
+
