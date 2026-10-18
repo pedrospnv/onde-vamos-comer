@@ -1,0 +1,13 @@
+-- Conteúdo inventado para demonstração. Nomes, preços, avaliações e localizações não são reais.
+insert into public.restaurants
+  (name, slug, cuisine, description, price_per_person, rating, rating_count, address, location, tags, status, is_demo)
+values
+  ('Demo Sushi SJC', 'demo-sushi-sjc', 'Japonesa', 'Combos de sushi e pratos quentes.', 48, 4.7, 126, 'Centro, São José dos Campos - SP', extensions.st_setsrid(extensions.st_point(-45.8872, -23.1791), 4326)::extensions.geography, array['sushi','combinados'], 'published', true),
+  ('Demo Massa & Cia', 'demo-massa-e-cia', 'Italiana', 'Massas artesanais e pratos para compartilhar.', 54, 4.6, 89, 'Jardim Aquarius, São José dos Campos - SP', extensions.st_setsrid(extensions.st_point(-45.9005, -23.2233), 4326)::extensions.geography, array['massa','pizza','vegetariano'], 'published', true),
+  ('Demo Raiz Brasileira', 'demo-raiz-brasileira', 'Brasileira', 'Pratos feitos, grelhados e acompanhamentos.', 34, 4.5, 201, 'Vila Adyana, São José dos Campos - SP', extensions.st_setsrid(extensions.st_point(-45.8912, -23.1986), 4326)::extensions.geography, array['prato feito','caseira','almoço'], 'published', true),
+  ('Demo Falafel', 'demo-falafel', 'Árabe', 'Falafel, homus e pratos vegetarianos.', 39, 4.8, 67, 'Jardim Esplanada, São José dos Campos - SP', extensions.st_setsrid(extensions.st_point(-45.8974, -23.2074), 4326)::extensions.geography, array['vegetariano','vegano'], 'published', true),
+  ('Demo Burger Lab', 'demo-burger-lab', 'Hambúrguer', 'Hambúrgueres artesanais e opções sem carne.', 42, 4.4, 154, 'Jardim Satélite, São José dos Campos - SP', extensions.st_setsrid(extensions.st_point(-45.8842, -23.2298), 4326)::extensions.geography, array['hambúrguer','burger'], 'published', true),
+  ('Demo Poke Tropical', 'demo-poke-tropical', 'Havaiana', 'Pokes montados na hora com opções leves.', 46, 4.6, 73, 'Parque Industrial, São José dos Campos - SP', extensions.st_setsrid(extensions.st_point(-45.8733, -23.219), 4326)::extensions.geography, array['poke','leve'], 'published', true),
+  ('Demo Cantina Econômica', 'demo-cantina-economica', 'Italiana', 'Pratos de massa com preço acessível.', 29, 4.2, 98, 'Centro, São José dos Campos - SP', extensions.st_setsrid(extensions.st_point(-45.8911, -23.1817), 4326)::extensions.geography, array['massa','econômico','almoço'], 'published', true),
+  ('Demo Veggie Bowl', 'demo-veggie-bowl', 'Vegetariana', 'Bowls coloridos e receitas vegetarianas.', 37, 4.7, 52, 'Vila Ema, São José dos Campos - SP', extensions.st_setsrid(extensions.st_point(-45.895, -23.2052), 4326)::extensions.geography, array['vegetariano','vegano','bowl'], 'published', true)
+on conflict (slug) do nothing;
