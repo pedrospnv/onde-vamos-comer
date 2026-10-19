@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { isFoursquareConfigured, searchFoursquarePlaces } from "./foursquare.js";
 
 const url = process.env.SUPABASE_URL;
 const key = process.env.SUPABASE_PUBLISHABLE_KEY;
@@ -6,6 +7,7 @@ const supabase = url && key ? createClient(url, key, { auth: { persistSession: f
 let currentDataMode = supabase ? "openstreetmap" : "not_configured";
 
 export async function searchRestaurants(filters = {}) {
+  if (isFoursquareConfigured()) return searchFoursquarePlaces(filters);
   if (!supabase) {
     currentDataMode = "not_configured";
     return [];
@@ -31,5 +33,5 @@ export async function searchRestaurants(filters = {}) {
 }
 
 export async function dataMode() {
-  return currentDataMode;
+  return isFoursquareConfigured() ? "foursquare" : currentDataMode;
 }

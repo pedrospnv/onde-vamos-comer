@@ -4,7 +4,7 @@
 
 A interface usa uma hierarquia editorial simples e cores discretas: fundo claro, verde escuro para ações e um acento quente nos detalhes. O conteúdo prioriza busca, filtros e informações verificáveis, sem mascote, personagem ou efeitos visuais associados a uma IA.
 
-Os cards aceitam apenas fotos reais com crédito e página de origem. Se a imagem falhar ao carregar, o restaurante some da lista. Cada card mostra o preço por pessoa e abre um detalhe com o cardápio oficial, a fonte do preço e a data da verificação. A imagem japonesa do hero é ilustrativa e não representa um restaurante específico.
+No modo Supabase, os cards exigem foto real com crédito e origem, cardápio, preço em reais com fonte e verificação recente. No modo Foursquare, os cards identificam o provedor e podem mostrar dados incompletos; a faixa geral (`$` a `$$$$`) não representa gasto por pessoa. Se a imagem falhar ou não existir, aparece uma ilustração da culinária. A imagem japonesa do hero também é ilustrativa e não representa um estabelecimento específico.
 
 ## Comportamento por tela
 
@@ -13,6 +13,7 @@ Os cards aceitam apenas fotos reais com crédito e página de origem. Se a image
 - **Celular (até 640 px):** hero e seção explicativa empilhados, card em uma coluna, filtros verticais e navegação de culinárias com rolagem horizontal.
 - **Celular estreito (até 380 px):** margens e controles compactados para larguras a partir de 320 px.
 - **Acessibilidade:** foco visível no teclado, controles com nomes acessíveis, estados de botão e suporte a `prefers-reduced-motion`.
+- No filtro Foursquare, a pessoa pode digitar uma cidade ou bairro de São Paulo ou permitir o GPS; a opção de GPS substitui a localidade digitada durante a busca.
 
 ## Área para melhorias futuras
 
@@ -20,4 +21,3 @@ Os cards aceitam apenas fotos reais com crédito e página de origem. Se a image
 - Testes automatizados em larguras comuns e leitores de tela.
 - Testes automatizados em larguras comuns e leitores de tela.
 - Navegação por mapa e fluxos de cadastro, caso façam parte do escopo futuro.
-

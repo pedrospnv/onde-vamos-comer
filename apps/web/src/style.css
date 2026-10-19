@@ -318,7 +318,7 @@ main {
 .filter-box label > span { display: flex; align-items: center; gap: 7px; color: #5d6c62; }
 .filter-box label > span svg { color: var(--green); }
 
-.filter-box select, .money-input {
+.filter-box select, .filter-box > label > input, .money-input {
   width: 100%;
   min-height: 40px;
   border: 1px solid var(--line);
@@ -327,6 +327,8 @@ main {
   padding: 0 11px;
   font-size: 12px;
 }
+
+.filter-box > label > input { min-width: 0; color: var(--ink); }
 
 .money-input { display: flex; align-items: center; gap: 8px; }
 .money-input b { color: var(--green); }
@@ -753,4 +755,3 @@ footer small a { color: var(--green); text-decoration: underline; text-underline
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
-
