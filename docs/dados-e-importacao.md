@@ -8,6 +8,8 @@ O OpenStreetMap é uma base colaborativa; não é uma listagem oficial, completa
 
 Os dados são publicados sob a [Open Database License (ODbL)](https://opendatacommons.org/licenses/odbl/). A aplicação atribui os contribuidores do OpenStreetMap e mantém `source`, `external_id` e `source_url` em cada registro.
 
+Quando `FOURSQUARE_API_KEY` está configurada, a busca consulta a Places API ao vivo. Os resultados não são gravados no Supabase nem armazenados em cache pelo app; a chave fica no servidor. A busca abrange a localidade informada em cada consulta, não uma exportação completa de todo o estado de São Paulo.
+
 ## Qualidade dos campos
 
 - **Nome e coordenadas:** usados quando presentes na fonte.
@@ -37,6 +39,8 @@ Preencha os campos na tabela `public.restaurants` somente depois de conferir o e
 
 RLS permite leitura anônima somente dos restaurantes publicados que passam por todos os critérios de curadoria. A função Postgres `search_restaurants` repete esses critérios e aplica paginação, filtros textuais, distância e ordenação.
 
+Na busca ao vivo do Foursquare, a classificação de preço é uma faixa geral de 1 a 4, não um valor em reais por pessoa. Detalhes podem estar ausentes e devem ser confirmados no site ou cardápio oficial do restaurante. Favoritos desse provedor ficam somente na sessão atual.
+
 ## Importar ou atualizar
 
 1. Configure `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` em `.env` local. Não configure a chave administrativa no Render nem em `VITE_*`.
@@ -52,4 +56,3 @@ npm run import:openstreetmap -- --export-json .\osm-export.json
 ```
 
 Overpass pode limitar ou atrasar consultas. Em caso de falha, tente novamente mais tarde ou configure outro endpoint permitido por `OVERPASS_URL`.
-

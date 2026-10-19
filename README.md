@@ -4,12 +4,13 @@ Um guia para descobrir onde comer em São Paulo com filtros de culinária, orça
 
 **Aplicação:** [onde-vamos-comer.onrender.com](https://onde-vamos-comer.onrender.com/)
 
-**Escopo atual:** município de São Paulo — não cobre todo o estado.
+**Cobertura atual:** o acervo próprio do OpenStreetMap cobre o município de São Paulo. Com a chave do Foursquare, a pessoa poderá buscar outras cidades e bairros sob demanda; o app não mantém um índice completo do estado.
 
 ## O que funciona hoje
 
 - Busca de restaurantes, cafés, bares e outros lugares para comer, importados do OpenStreetMap.
-- Filtros por culinária, texto, distância e orçamento; resultados paginados em lotes de 50.
+- Busca ao vivo no Foursquare quando `FOURSQUARE_API_KEY` está configurada, com categoria, distância e faixa geral de preço (`$` a `$$$$`). Os resultados dessa fonte não são gravados no Supabase.
+- Filtros por culinária, texto, localização e faixa de preço; o Supabase tem paginação em lotes de 50, enquanto o Foursquare retorna até 50 lugares por consulta.
 - Localização do navegador somente depois de a pessoa tocar em **Alterar** e permitir o acesso.
 - Lugares salvos no armazenamento local do navegador, sem conta de usuário.
 - Cards só exibem restaurantes publicados com foto real carregando e creditada, descrição específica, cardápio oficial, preço com fonte e verificação recente. Registros incompletos ficam ocultos.
@@ -20,9 +21,10 @@ Um guia para descobrir onde comer em São Paulo com filtros de culinária, orça
 ## Limites conhecidos
 
 - A base contém lugares mapeados dentro do município de São Paulo. O OpenStreetMap é colaborativo e não representa uma lista oficial ou completa.
-- O OpenStreetMap não é fonte de preços, cardápios ou fotos confiáveis. A lista fica vazia até que os estabelecimentos sejam enriquecidos e verificados com fontes adequadas.
-- O orçamento filtra somente os valores por pessoa verificados; resultados sem preço não são exibidos.
-- A busca avançada por IA ainda não está habilitada no deploy. Sem `OPENAI_API_KEY`, o app usa a interpretação local.
+- Sem a chave do Foursquare, são mostrados apenas cadastros próprios que passaram pela curadoria rigorosa. O OSM não fornece preços ou cardápios confiáveis; a chave ainda precisa ser configurada no Render para ativar a busca ao vivo.
+- A faixa do Foursquare não equivale a um preço em reais por pessoa. Preços exatos dependem de uma fonte oficial de cardápio, ainda não conectada.
+- Resultados do Foursquare são consultados sem cache; favoritos dessa fonte ficam somente na sessão.
+- Sem `OPENAI_API_KEY`, o app usa uma interpretação local de culinária, orçamento e texto livre. A chave habilita a interpretação avançada no servidor.
 - Favoritos ficam neste navegador e não sincronizam entre dispositivos.
 - A atualização dos dados é manual; não há sincronização agendada.
 
@@ -32,6 +34,7 @@ Um guia para descobrir onde comer em São Paulo com filtros de culinária, orça
 - **API:** Node.js 22+, Express 5, validação com Zod e limites de requisição.
 - **Dados:** Supabase Postgres, PostGIS e Row Level Security.
 - **Fonte geográfica:** OpenStreetMap via Overpass API, sob a licença ODbL.
+- **Descoberta ao vivo opcional:** Foursquare Places API, com atribuição e respostas sem cache.
 - **Interpretação opcional:** OpenAI Responses API, restrita à extração de filtros — a IA não inventa restaurantes.
 - **Hospedagem:** serviço web do Render que serve a API e os arquivos compilados do front-end.
 
@@ -76,9 +79,12 @@ O importador consulta a área do município, atualiza registros pelo identificad
 | `SUPABASE_SERVICE_ROLE_KEY` | Só para importar | Chave administrativa. Mantenha apenas no ambiente local durante a importação. |
 | `OPENAI_API_KEY` | Não | Habilita a interpretação avançada no servidor. Não está habilitada no deploy atual. |
 | `OPENAI_MODEL` | Não | Modelo usado pela Responses API; padrão `gpt-4.1-mini`. |
+| `FOURSQUARE_API_KEY` | Sim para busca ao vivo | Chave privada do Places API; configure somente no Render/servidor. |
 | `OVERPASS_URL` | Não | Endpoint alternativo do Overpass; por padrão usa `https://overpass-api.de/api/interpreter`. |
 
 Nunca coloque chaves administrativas em variáveis `VITE_*`, no front-end, no GitHub ou em documentação.
+
+O uso da Places API segue as [regras de retenção e atribuição do Foursquare](https://docs.foursquare.com/developer/reference/usage-guidelines-personalization-apis) e sua [tabela atual de preços](https://docs.foursquare.com/developer/reference/upcoming-changes). A tabela publicada informa 500 chamadas Pro gratuitas e, depois, US$ 15 por mil chamadas na faixa inicial; confira o painel de uso e faturamento antes de disponibilizar a chave. O limite da aplicação é por endereço IP, não um teto mensal global. Consulte a [política de privacidade](https://onde-vamos-comer.onrender.com/privacidade) para saber como localização e resultados são tratados.
 
 ## Comandos do projeto
 
@@ -87,10 +93,11 @@ Nunca coloque chaves administrativas em variáveis `VITE_*`, no front-end, no Gi
 | `npm run dev` | Inicia a API e o Vite em modo de desenvolvimento. |
 | `npm run build` | Verifica a sintaxe da API e gera o front-end em `apps/web/dist`. |
 | `npm run check:api` | Verifica a sintaxe dos módulos da API e do importador. |
+| `npm test` | Roda testes da integração Foursquare e da validação do proxy de fotos. |
 | `npm start` | Inicia o servidor Express para desenvolvimento ou hospedagem. |
 | `npm run import:openstreetmap` | Importa e sincroniza os locais do município no Supabase. |
 
-O projeto ainda não tem uma suíte automatizada de testes funcionais. Veja [Desenvolvimento e deploy](docs/desenvolvimento-e-deploy.md).
+Os testes usam respostas simuladas e não substituem uma validação ao vivo com uma chave válida.
 
 ## Documentação
 
@@ -103,4 +110,3 @@ O projeto ainda não tem uma suíte automatizada de testes funcionais. Veja [Des
 ## Créditos dos dados
 
 © OpenStreetMap contributors. Dados sob [Open Database License (ODbL)](https://opendatacommons.org/licenses/odbl/). A aplicação mantém a atribuição visível e oferece links para os registros de origem.
-
