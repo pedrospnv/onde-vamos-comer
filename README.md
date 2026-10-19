@@ -12,15 +12,16 @@ Um guia para descobrir onde comer em São Paulo com filtros de culinária, orça
 - Filtros por culinária, texto, distância e orçamento; resultados paginados em lotes de 50.
 - Localização do navegador somente depois de a pessoa tocar em **Alterar** e permitir o acesso.
 - Lugares salvos no armazenamento local do navegador, sem conta de usuário.
-- Fotos ilustrativas locais por culinária nos cards sem imagem própria, identificadas como ilustração; elas não representam estabelecimentos específicos.
+- Cards só exibem restaurantes publicados com foto real carregando e creditada, descrição específica, cardápio oficial, preço com fonte e verificação recente. Registros incompletos ficam ocultos.
+- A imagem japonesa do hero é ilustrativa e não representa um estabelecimento.
 - Interpretação local de frases em português. A interpretação por OpenAI é opcional e precisa de uma chave de API no servidor.
 - Atribuição ao OpenStreetMap e link para a origem de cada local.
 
 ## Limites conhecidos
 
 - A base contém lugares mapeados dentro do município de São Paulo. O OpenStreetMap é colaborativo e não representa uma lista oficial ou completa.
-- O OpenStreetMap não é fonte de preços e avaliações confiáveis. Na base atual, esses campos não estão preenchidos; o app os apresenta como desconhecidos.
-- Quando o usuário define um orçamento, lugares sem preço continuam visíveis para evitar ocultar opções. Portanto, o orçamento não é uma garantia de preço.
+- O OpenStreetMap não é fonte de preços, cardápios ou fotos confiáveis. A lista fica vazia até que os estabelecimentos sejam enriquecidos e verificados com fontes adequadas.
+- O orçamento filtra somente os valores por pessoa verificados; resultados sem preço não são exibidos.
 - A busca avançada por IA ainda não está habilitada no deploy. Sem `OPENAI_API_KEY`, o app usa a interpretação local.
 - Favoritos ficam neste navegador e não sincronizam entre dispositivos.
 - A atualização dos dados é manual; não há sincronização agendada.
@@ -48,12 +49,13 @@ O front-end abre em `http://localhost:5173` e a API em `http://localhost:3000`. 
 
 ## Configuração do Supabase
 
-Use um projeto separado do Farma Pro. A aplicação precisa de `SUPABASE_URL` e `SUPABASE_PUBLISHABLE_KEY` no servidor. A chave publishable é usada com RLS: usuários anônimos só podem ler locais publicados; a importação usa uma chave administrativa exclusivamente no script local.
+Use um projeto separado do Farma Pro. A aplicação precisa de `SUPABASE_URL` e `SUPABASE_PUBLISHABLE_KEY` no servidor. A chave publishable é usada com RLS: usuários anônimos só podem ler restaurantes publicados e verificados; a importação usa uma chave administrativa exclusivamente no script local.
 
 Em uma base nova, aplique as migrações em ordem:
 
 1. `supabase/migrations/202610170001_initial_schema.sql`
 2. `supabase/migrations/202610180001_restaurant_search_pagination.sql`
+3. `supabase/migrations/20261018114537_verified_restaurants_only.sql`
 
 Para carregar ou atualizar os lugares, configure `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` somente no ambiente local e execute:
 

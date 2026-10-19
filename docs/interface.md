@@ -4,7 +4,7 @@
 
 A interface usa uma hierarquia editorial simples e cores discretas: fundo claro, verde escuro para ações e um acento quente nos detalhes. O conteúdo prioriza busca, filtros e informações verificáveis, sem mascote, personagem ou efeitos visuais associados a uma IA.
 
-Quando o banco tem uma imagem de origem, ela aparece no card. Sem essa imagem, o card usa uma foto ilustrativa local correspondente à culinária e deixa isso indicado sobre a foto. A foto de culinária japonesa também aparece no hero; não representa um restaurante específico. Preço e avaliação ausentes continuam claramente sinalizados.
+Os cards aceitam apenas fotos reais com crédito e página de origem. Se a imagem falhar ao carregar, o restaurante some da lista. Cada card mostra o preço por pessoa e abre um detalhe com o cardápio oficial, a fonte do preço e a data da verificação. A imagem japonesa do hero é ilustrativa e não representa um restaurante específico.
 
 ## Comportamento por tela
 
@@ -16,8 +16,8 @@ Quando o banco tem uma imagem de origem, ela aparece no card. Sem essa imagem, o
 
 ## Área para melhorias futuras
 
-- Imagens reais autorizadas ou fornecidas pelos estabelecimentos para substituir as ilustrações.
-- Preços e avaliações de uma fonte licenciada e atualizada.
+- Curadoria de fotos autorizadas, cardápios e preços atuais para os restaurantes elegíveis.
+- Testes automatizados em larguras comuns e leitores de tela.
 - Testes automatizados em larguras comuns e leitores de tela.
 - Navegação por mapa e fluxos de cadastro, caso façam parte do escopo futuro.
 

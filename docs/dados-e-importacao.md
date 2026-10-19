@@ -12,12 +12,15 @@ Os dados são publicados sob a [Open Database License (ODbL)](https://opendataco
 
 - **Nome e coordenadas:** usados quando presentes na fonte.
 - **Culinária:** classificação por tags OSM; quando não há informação, fica como `Não informada`.
-- **Endereço e descrição:** podem estar incompletos ou ser texto livre da comunidade.
-- **Preço e avaliação:** não são fornecidos de forma consistente pelo OSM. Estão vazios na base atual e nunca são estimados pelo app.
-- **Imagens:** não são baixadas pelo importador; a interface usa um marcador visual neutro quando não há imagem.
-- **Situação comercial:** pode mudar depois da última edição OSM. Confirme o local e o preço antes de sair.
+- **Endereço e descrição:** podem estar incompletos ou ser texto livre da comunidade. A descrição publicada precisa ser específica e ter pelo menos 40 caracteres.
+- **Preço, cardápio e imagens:** não são fornecidos de forma confiável pelo OSM. O app não estima nem substitui esses dados por conteúdo ilustrativo.
+- **Situação comercial:** só é considerada verificada por até 180 dias após a conferência. Alterações em nome, endereço, descrição, culinária, preço, foto, cardápio ou fonte invalidam automaticamente essa conferência.
 
-O filtro por orçamento aceita resultados sem preço conhecido. Assim, ele não promete que todos os lugares respeitem o valor escolhido; o app apresenta um aviso junto aos resultados.
+## Critérios de publicação
+
+Um restaurante só aparece quando está publicado e tem culinária identificada, descrição específica, preço por pessoa maior que zero, cardápio oficial, fonte do preço, foto real com crédito e link de origem, além de `verified_at` preenchido nos últimos 180 dias. Todos os links precisam usar HTTPS. RLS e a função de busca aplicam os mesmos critérios; a interface também rejeita registros incompletos e oculta fotos que não carregam.
+
+Preencha os campos na tabela `public.restaurants` somente depois de conferir o estabelecimento e as fontes. `verified_at` é a data da conferência manual; não a atualize por rotina automática. Se algum dado relevante mudar, refaça a verificação para tornar o registro visível novamente.
 
 ## Esquema
 
@@ -26,12 +29,13 @@ O filtro por orçamento aceita resultados sem preço conhecido. Assim, ele não 
 - Identidade: `id`, `name`, `slug`.
 - Classificação: `cuisine`, `description`, `tags`.
 - Preço e nota opcionais: `price_per_person`, `rating`, `rating_count`.
+- Dados obrigatórios para aparecer: `image_url`, `image_attribution`, `image_source_url`, `menu_url`, `price_source_url`, `verified_at`.
 - Endereço: `address`, `city`, `state` e `location` em `geography(Point, 4326)`.
 - Links: `website_url`, `source_url`.
 - Proveniência e sincronização: `source`, `external_id`, `last_synced_at`.
 - Estado: `status` (`draft` ou `published`) e `is_demo` fixo em `false`.
 
-RLS permite leitura anônima somente dos registros publicados. A busca ocorre pela função Postgres `search_restaurants`, que aplica paginação, filtros textuais, distância e ordenação.
+RLS permite leitura anônima somente dos restaurantes publicados que passam por todos os critérios de curadoria. A função Postgres `search_restaurants` repete esses critérios e aplica paginação, filtros textuais, distância e ordenação.
 
 ## Importar ou atualizar
 
@@ -48,3 +52,4 @@ npm run import:openstreetmap -- --export-json .\osm-export.json
 ```
 
 Overpass pode limitar ou atrasar consultas. Em caso de falha, tente novamente mais tarde ou configure outro endpoint permitido por `OVERPASS_URL`.
+

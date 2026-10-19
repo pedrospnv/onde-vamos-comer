@@ -20,37 +20,47 @@ const filtersOpen = ref(false);
 const detail = ref(null);
 const sortBy = ref("recommended");
 const favoritesOnly = ref(false);
+const failedPhotos = ref(new Set());
 const pageFilters = ref({ cuisine: "", maxBudget: 60, q: "" });
 const pageSize = 50;
-const cuisines = ["Todos", "Japonesa", "Italiana", "Brasileira", "Árabe", "Hambúrguer", "Vegetariana", "Chinesa", "Mexicana", "Indiana", "Mediterrânea", "Cafeteria", "Bar", "Não informada"];
-const cuisineImages = [
-  ["japonesa|sushi|ramen|izakaya|teppanyaki|sashimi", "japonesa"],
-  ["italiana|pizza|pasta|pizzeria", "italiana"],
-  ["brasileira|brasil|churrasco|mineira|baiana|feijoada", "brasileira"],
-  ["arabe|libanesa|siria|middle eastern|falafel|shawarma|mediterranea|grega|turca", "arabe"],
-  ["hamburguer|burger", "hamburguer"],
-  ["vegetariana|vegana|vegan|vegetarian", "vegetariana"],
-  ["chinesa|chinese", "chinesa"],
-  ["mexicana|taco|burrito", "mexicana"],
-  ["indiana|curry", "indiana"],
-  ["cafeteria|cafe|coffee|cha", "cafeteria"]
-];
-function cuisineImage(cuisine) {
-  const normalized = String(cuisine || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-  const match = cuisineImages.find(([terms]) => new RegExp(`(?:^|\\b)(?:${terms})(?:\\b|$)`, "i").test(normalized));
-  return `/images/${match?.[1] || "generica"}.webp`;
-}
+const cuisines = ["Todos", "Japonesa", "Italiana", "Brasileira", "Árabe", "Hambúrguer", "Vegetariana", "Chinesa", "Mexicana", "Indiana", "Mediterrânea", "Cafeteria", "Bar"];
 const title = computed(() => favoritesOnly.value ? "Seus lugares salvos" : items.value.length + (items.value.length === 1 ? " lugar encontrado" : " lugares encontrados"));
 const hasKnownPrice = computed(() => (favoritesOnly.value ? [...favoriteItems.value.values()] : items.value).some((item) => item.price_per_person != null));
 const hasKnownRating = computed(() => (favoritesOnly.value ? [...favoriteItems.value.values()] : items.value).some((item) => item.rating != null));
 const sorted = computed(() => {
-  const list = favoritesOnly.value ? [...favoriteItems.value.values()] : [...items.value];
+  const list = (favoritesOnly.value ? [...favoriteItems.value.values()] : [...items.value])
+    .filter((item) => hasCompleteRestaurantDetails(item) && !failedPhotos.value.has(photoKey(item)));
   if (sortBy.value === "price") return list.sort((a, b) => (a.price_per_person ?? Infinity) - (b.price_per_person ?? Infinity));
   if (sortBy.value === "rating") return list.sort((a, b) => (b.rating ?? -Infinity) - (a.rating ?? -Infinity));
   if (place.value) return list.sort((a, b) => (a.distance_km ?? Infinity) - (b.distance_km ?? Infinity));
   return list.sort((a, b) => (b.rating ?? -Infinity) - (a.rating ?? -Infinity));
 });
 const money = (value) => Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+const verifiedDate = (value) => value ? new Date(value).toLocaleDateString("pt-BR") : "";
+function hasCompleteRestaurantDetails(item) {
+  const timestamp = Date.parse(item?.verified_at || "");
+  return Boolean(
+    item?.image_url?.startsWith("https://")
+    && item?.image_attribution?.trim()
+    && item?.image_source_url?.startsWith("https://")
+    && item?.description?.trim().length >= 40
+    && item?.cuisine?.trim()
+    && item.cuisine.trim().toLowerCase() !== "não informada"
+    && item?.menu_url?.startsWith("https://")
+    && item?.price_source_url?.startsWith("https://")
+    && Number(item?.price_per_person) > 0
+    && Number.isFinite(timestamp)
+    && timestamp <= Date.now()
+    && timestamp > Date.now() - 180 * 24 * 60 * 60 * 1000
+  );
+}
+function photoKey(item) { return `${item?.id || ""}:${item?.image_url || ""}`; }
+function markPhotoUnavailable(item) {
+  const failed = new Set(failedPhotos.value);
+  failed.add(photoKey(item));
+  failedPhotos.value = failed;
+  if (detail.value?.id === item?.id) detail.value = null;
+}
 async function loadMeta() {
   try {
     const response = await fetch("/api/meta");
@@ -131,6 +141,7 @@ function setCuisine(value) {
 function loadMore() { search({ ...pageFilters.value, append: true }); }
 
 function toggleFavorite(item) {
+  if (!hasCompleteRestaurantDetails(item)) return;
   const next = new Set(favorites.value);
   const saved = new Map(favoriteItems.value);
   if (next.has(item.id)) { next.delete(item.id); saved.delete(item.id); }
@@ -166,7 +177,7 @@ onMounted(async () => {
   } catch {}
   await loadMeta();
   await search({ cuisine: "", maxBudget: 60 });
-  const saved = new Map(stored.filter((item) => item && typeof item === "object" && item.id).map((item) => [item.id, item]));
+  const saved = new Map(stored.filter((item) => item && typeof item === "object" && item.id && hasCompleteRestaurantDetails(item)).map((item) => [item.id, item]));
   const oldIds = new Set(stored.filter((item) => typeof item === "string"));
   for (const item of items.value) if (oldIds.has(item.id)) saved.set(item.id, item);
   favoriteItems.value = saved;
@@ -216,7 +227,7 @@ onMounted(async () => {
         </div>
         <div class="tabs"><button v-for="c in cuisines" :key="c" :class="{ active: activeCuisine === c }" @click="setCuisine(c)">{{ c }}</button></div>
         <div v-if="error" class="error" role="status" aria-live="polite"><span>{{ error }}</span><button aria-label="Fechar aviso" @click="error = ''"><X :size="15" /></button></div>
-        <div v-if="mode === 'openstreetmap'" class="demo-label"><i></i> Locais do OpenStreetMap. Preço e avaliação não informados ficam sinalizados, sem estimativas inventadas. <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a></div>
+        <div v-if="mode === 'openstreetmap'" class="demo-label"><i></i> Só exibimos lugares com foto real creditada, descrição específica, cardápio oficial, preço e funcionamento confirmados nos últimos 6 meses. Os dados de localização vêm do OpenStreetMap. <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a></div>
         <div v-else-if="mode === 'not_configured'" class="demo-label"><i></i> A base de restaurantes reais ainda não foi conectada. Configure o Supabase e importe os locais de São Paulo.</div>
         <div v-if="query && interpretedQuery && !error" class="search-hint"><Check :size="15" /> Busca aplicada com base no que você descreveu.</div>
         <div v-if="items.some(item => item.price_per_person == null)" class="budget-note"><Wallet :size="15" /> Os locais sem preço cadastrado podem ultrapassar R$ {{ Number(budget).toLocaleString('pt-BR') }} por pessoa. Confirme o valor com o restaurante antes de ir.</div>
@@ -224,25 +235,25 @@ onMounted(async () => {
         <div v-else-if="sorted.length" class="cards">
           <article v-for="(item,index) in sorted" :key="item.id" class="card">
             <div class="photo" :class="'photo-'+(index%6)">
-              <img :src="item.image_url || cuisineImage(item.cuisine)" :alt="item.image_url ? 'Foto de '+item.name : 'Imagem ilustrativa de culinária '+(item.cuisine || 'variada')" loading="lazy" decoding="async" />
-              <span v-if="!item.image_url" class="photo-note">Imagem ilustrativa</span>
+              <img :src="item.image_url" :alt="'Foto real de '+item.name" loading="lazy" decoding="async" @error="markPhotoUnavailable(item)" />
+              <a class="photo-credit" :href="item.image_source_url" target="_blank" rel="noreferrer" :aria-label="'Crédito da foto: '+item.image_attribution">Foto: {{ item.image_attribution }}</a>
               <button class="heart" :aria-label="favorites.has(item.id)?'Remover dos salvos':'Salvar restaurante'" @click="toggleFavorite(item)"><Heart :size="18" :fill="favorites.has(item.id)?'currentColor':'none'" /></button>
-              <b class="price">{{ item.price_per_person != null ? money(item.price_per_person) : "Preço não informado" }} <small v-if="item.price_per_person != null">/ pessoa</small></b>
+              <b class="price">{{ money(item.price_per_person) }} <small>/ pessoa</small></b>
             </div>
             <div class="card-content">
               <div class="card-title"><div><span class="cuisine">{{ item.cuisine }}</span><h3>{{ item.name }}</h3></div><span v-if="item.rating != null" class="rating"><Star :size="14" fill="currentColor" /> {{ Number(item.rating).toFixed(1) }}</span><span v-else class="rating no-rating">Sem avaliação</span></div>
               <p class="description">{{ item.description }}</p>
               <div class="meta"><span><MapPin :size="13" /> {{ item.distance_km != null ? Number(item.distance_km).toFixed(1)+' km' : item.city || 'São Paulo' }}</span><span><Clock3 :size="13" /> {{ item.rating_count ? item.rating_count+' avaliações' : 'Sem avaliações' }}</span></div>
-              <div class="card-bottom"><span v-if="item.price_per_person != null"><Check :size="13" /> Preço cadastrado</span><span v-else>Confirme o preço antes de ir</span><button @click="detail=item">Ver detalhes <ArrowUpRight :size="14" /></button></div>
+              <div class="card-bottom"><span><Check :size="13" /> Dados verificados</span><button @click="detail=item">Ver cardápio <ArrowUpRight :size="14" /></button></div>
             </div>
           </article>
         </div>
         <button v-if="hasMore && !busy && !favoritesOnly" class="more" @click="loadMore">Carregar mais lugares <ArrowRight :size="15" /></button>
-        <div v-if="!busy && !sorted.length" class="empty"><span class="empty-icon"><Heart v-if="favoritesOnly" :size="25" /><Utensils v-else :size="25" /></span><h3>{{ favoritesOnly ? "Você ainda não salvou nenhum lugar" : mode === 'not_configured' ? "A base ainda não foi configurada" : "Nenhum lugar encontrado com esses filtros" }}</h3><p>{{ favoritesOnly ? "Toque no coração de um restaurante para guardá-lo aqui." : mode === 'not_configured' ? "Conecte o projeto Supabase e carregue os dados do município de São Paulo." : "Tente aumentar o orçamento ou escolher outra culinária." }}</p><button v-if="!favoritesOnly && mode !== 'not_configured'" @click="budget=100;cuisine='';activeCuisine='Todos';query='';search()">Limpar filtros</button><button v-else-if="favoritesOnly" @click="favoritesOnly=false">Voltar aos restaurantes</button></div>
+        <div v-if="!busy && !sorted.length" class="empty"><span class="empty-icon"><Heart v-if="favoritesOnly" :size="25" /><Utensils v-else :size="25" /></span><h3>{{ favoritesOnly ? "Você ainda não salvou nenhum lugar" : mode === 'not_configured' ? "A base ainda não foi configurada" : "Nenhum restaurante completo para exibir" }}</h3><p>{{ favoritesOnly ? "Toque no coração de um restaurante confirmado para guardá-lo aqui." : mode === 'not_configured' ? "Conecte o projeto Supabase para carregar restaurantes verificados." : "Só mostramos restaurantes com foto real carregando e creditada, descrição específica, cardápio oficial, preço com fonte e verificação feita nos últimos 6 meses. Os cadastros sem todos esses dados ficam ocultos." }}</p><button v-if="favoritesOnly" @click="favoritesOnly=false">Voltar aos restaurantes</button></div>
       </section>
 
       <section class="how">
-        <div class="how-copy"><div class="kicker">COMO FUNCIONA</div><h2>Escolha com mais<br />clareza e menos dúvida.</h2><p>Combine culinária, bairro e orçamento quando essas informações estiverem cadastradas. Se faltar preço ou avaliação, a gente avisa para você confirmar antes de sair.</p><button @click="goTop">Buscar um lugar <ArrowRight :size="15" /></button></div>
+        <div class="how-copy"><div class="kicker">COMO FUNCIONA</div><h2>Escolha com mais<br />clareza e menos dúvida.</h2><p>Só mostramos lugares com foto identificada, descrição própria, cardápio oficial e valores confirmados recentemente.</p><button @click="goTop">Buscar um lugar <ArrowRight :size="15" /></button></div>
         <div class="steps">
           <div><span>01</span><i><MessageCircle :size="19" /></i><section><strong>Diga o que está procurando</strong><p>Um prato, culinária ou bairro já ajuda.</p></section></div>
           <div><span>02</span><i><Wallet :size="19" /></i><section><strong>Defina seu orçamento</strong><p>Escolha um valor aproximado por pessoa.</p></section></div>
@@ -250,17 +261,19 @@ onMounted(async () => {
         </div>
       </section>
     </main>
-    <footer><a class="brand" href="#"><span class="brand-mark"><Utensils :size="15" /></span><span>onde<span class="brand-dot">.</span>vamos?</span></a><span>Feito pra sair da dúvida e ir direto pra mesa.</span><small>Dados de mapa © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap contributors</a> · Valores e avaliações só aparecem quando cadastrados.</small></footer>
+    <footer><a class="brand" href="#"><span class="brand-mark"><Utensils :size="15" /></span><span>onde<span class="brand-dot">.</span>vamos?</span></a><span>Feito pra sair da dúvida e ir direto pra mesa.</span><small>Dados de mapa © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap contributors</a> · Fotos, cardápios e preços aparecem com origem e verificação.</small></footer>
     <div v-if="detail" class="backdrop" @click.self="detail=null" @keydown.esc="detail=null">
       <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-        <button class="close" aria-label="Fechar" @click="detail=null"><X :size="18" /></button><div class="modal-art"><Utensils :size="28" /></div>
+        <button class="close" aria-label="Fechar" @click="detail=null"><X :size="18" /></button><div class="modal-art"><img :src="detail.image_url" :alt="'Foto real de '+detail.name" @error="markPhotoUnavailable(detail)" /><a :href="detail.image_source_url" target="_blank" rel="noreferrer">Foto: {{ detail.image_attribution }}</a></div>
         <span class="cuisine">{{ detail.cuisine }}</span><h2 id="modal-title">{{ detail.name }}</h2><p>{{ detail.description }}</p>
-        <div class="modal-line"><Wallet :size="16" /><template v-if="detail.price_per_person != null"><b>{{ money(detail.price_per_person) }}</b><span>estimativa por pessoa</span></template><span v-else>Preço não informado; confirme diretamente com o restaurante.</span></div>
+        <div class="modal-line"><Wallet :size="16" /><b>{{ money(detail.price_per_person) }}</b><span>por pessoa</span></div>
         <div class="modal-line"><MapPin :size="16" />{{ detail.address || detail.city }}</div>
         <div class="tag-list"><span v-for="tag in detail.tags" :key="tag">{{ tag }}</span></div>
-        <p class="disclaimer">Preço, avaliações e disponibilidade podem mudar. Confirme com o restaurante antes de ir.</p>
+        <p class="verification-note">Informações verificadas em {{ verifiedDate(detail.verified_at) }}. Valores e disponibilidade ainda podem mudar.</p>
+        <a class="menu-link" :href="detail.menu_url" target="_blank" rel="noreferrer">Ver cardápio e valores oficiais <ArrowUpRight :size="15" /></a>
+        <a class="source-link" :href="detail.price_source_url" target="_blank" rel="noreferrer">Consultar fonte do valor</a>
         <a class="map-link" :href="mapsUrl(detail)" target="_blank" rel="noreferrer">Ver no mapa <ArrowUpRight :size="15" /></a>
-        <a v-if="detail.source_url" class="source-link" :href="detail.source_url" target="_blank" rel="noreferrer">Ver este local no OpenStreetMap</a>
+        <a v-if="detail.source_url" class="source-link" :href="detail.source_url" target="_blank" rel="noreferrer">Ver localização no OpenStreetMap</a>
       </section>
     </div>
   </div>

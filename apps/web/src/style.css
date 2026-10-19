@@ -458,7 +458,8 @@ main {
 .photo-2 { background: #f0ece7; }
 .photo-3 { background: #eaeef0; }
 .photo img { width: 100%; height: 100%; display: block; object-fit: cover; }
-.photo-note { position: absolute; top: 10px; left: 10px; padding: 5px 8px; border: 1px solid rgb(255 255 255 / 74%); border-radius: 999px; background: rgb(255 255 255 / 88%); color: #49564d; font-size: 9px; font-weight: 600; }
+.photo-credit { max-width: calc(100% - 100px); position: absolute; top: 10px; left: 10px; overflow: hidden; padding: 5px 8px; border: 1px solid rgb(255 255 255 / 74%); border-radius: 999px; background: rgb(255 255 255 / 92%); color: #34483b; font-size: 9px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.photo-credit:hover { background: white; text-decoration: underline; }
 
 .food-placeholder { display: flex; flex-direction: column; align-items: center; gap: 10px; color: #728579; }
 .food-placeholder > span:last-child { max-width: calc(100% - 24px); overflow: hidden; color: #66776a; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
@@ -617,7 +618,9 @@ footer small a { color: var(--green); text-decoration: underline; text-underline
 .modal { width: min(460px, 100%); max-height: min(90dvh, 760px); position: relative; overflow-y: auto; padding: 25px; border: 1px solid #e1e7e0; border-radius: 17px; background: var(--page); box-shadow: 0 20px 70px rgb(15 29 20 / 25%); }
 .close { width: 34px; height: 34px; position: absolute; top: 12px; right: 12px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 50%; background: white; }
 .close:hover { background: #f0f3ef; }
-.modal-art { height: 122px; display: grid; place-items: center; margin: -5px -5px 17px; border-radius: 12px; background: #e9eee8; color: var(--green); }
+.modal-art { height: auto; aspect-ratio: 2 / 1; position: relative; overflow: hidden; margin: -5px -5px 17px; border-radius: 12px; background: #e9eee8; }
+.modal-art img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.modal-art a { max-width: calc(100% - 20px); position: absolute; bottom: 9px; left: 9px; overflow: hidden; padding: 5px 8px; border-radius: 999px; background: rgb(255 255 255 / 94%); color: #34483b; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
 .modal h2 { margin: 6px 0 8px; font: 800 24px/1.2 "Manrope", "DM Sans", sans-serif; }
 .modal > p { color: var(--muted); font-size: 12px; line-height: 1.6; }
 .modal-line { display: flex; align-items: center; gap: 9px; padding: 12px 0; border-top: 1px solid var(--line); font-size: 12px; line-height: 1.5; }
@@ -629,6 +632,9 @@ footer small a { color: var(--green); text-decoration: underline; text-underline
 .modal .disclaimer { margin: 10px 0 14px; font-size: 11px; }
 .map-link { width: 100%; }
 .source-link { display: block; margin-top: 12px; color: var(--green); font-size: 11px; text-align: center; text-decoration: underline; text-underline-offset: 3px; }
+.verification-note { margin: 12px 0; padding: 10px 12px; border-radius: 9px; background: #f1f5f1; color: #526457 !important; font-size: 11px !important; }
+.menu-link { width: 100%; display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: 12px; padding: 11px 14px; border: 1px solid #d7e1d8; border-radius: 9px; background: #edf3ed; color: var(--green-dark); font-size: 12px; font-weight: 700; }
+.menu-link:hover { background: #e3ede3; }
 
 @media (max-width: 900px) {
   .topbar, main, footer { width: min(100% - 40px, 760px); }

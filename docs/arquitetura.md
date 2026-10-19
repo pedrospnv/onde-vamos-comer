@@ -35,8 +35,8 @@ flowchart LR
 ### Banco de dados
 
 - `public.restaurants` guarda os lugares, coordenadas PostGIS, metadados da fonte e estado de publicação.
-- RLS permite leitura anônima apenas de registros publicados.
-- A função `public.search_restaurants` aplica filtros textuais, geográficos, de culinária e orçamento e devolve uma página por chamada.
+- RLS permite leitura anônima apenas de restaurantes publicados, completos e verificados nos últimos 180 dias.
+- A função `public.search_restaurants` aplica os mesmos critérios, além de filtros textuais, geográficos, de culinária e orçamento e paginação.
 - A chave `SUPABASE_SERVICE_ROLE_KEY` só é necessária no script de importação e não deve ser colocada no serviço web.
 
 ## Fluxo da busca
@@ -45,7 +45,7 @@ flowchart LR
 2. A API valida os dados e, se necessário, interpreta a frase.
 3. A API chama `search_restaurants` no Supabase.
 4. O PostGIS calcula a distância quando latitude e longitude foram fornecidas.
-5. A interface apresenta os dados de origem e sinaliza preço e avaliação desconhecidos.
+5. A interface só mostra resultados completos, com preço, foto creditada, cardápio e fontes; avaliações continuam opcionais.
 
 Ao selecionar **Alterar**, o navegador solicita permissão de localização. Se autorizada, as coordenadas são usadas para ordenar e limitar a busca; elas não são gravadas pelo app. Os favoritos são guardados no `localStorage` do dispositivo.
 
@@ -57,3 +57,4 @@ Ao selecionar **Alterar**, o navegador solicita permissão de localização. Se 
 - A API limita chamadas gerais a 60 por minuto por origem e `/api/recommend` a 10 por minuto.
 - Sem login, o app não mantém perfis ou favoritos em servidor.
 - Se a integração OpenAI for habilitada, somente a frase digitada é enviada para extrair filtros. Coordenadas de localização são enviadas à API do próprio app para a busca geográfica, não à chamada da OpenAI.
+

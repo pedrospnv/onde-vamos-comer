@@ -28,7 +28,7 @@ Busca uma página de lugares.
 | --- | --- | --- | --- |
 | `cuisine` | texto | 60 caracteres | Correspondência parcial de culinária. |
 | `q` | texto | 120 caracteres | Busca em nome, descrição, endereço e tags. |
-| `maxBudget` | número | maior que 0 e até 10.000 | Filtra por preço conhecido. Locais sem preço continuam incluídos. |
+| `maxBudget` | número | maior que 0 e até 10.000 | Filtra o preço verificado por pessoa. Registros sem preço não são publicados pela API. |
 | `lat` | número | -90 a 90 | Latitude de referência. Envie junto com `lng`. |
 | `lng` | número | -180 a 180 | Longitude de referência. Envie junto com `lat`. |
 | `radiusKm` | número | 1 a 100 | Raio da busca. O padrão da API é 45 km. |
@@ -41,21 +41,28 @@ Exemplo:
 GET /api/restaurants?cuisine=Japonesa&maxBudget=60&lat=-23.56&lng=-46.66&radiusKm=15&limit=50&offset=0
 ```
 
-Resposta simplificada:
+Resposta simplificada (os domínios `exemplo.com` e os valores abaixo são placeholders de documentação, não restaurantes publicados):
 
 ```json
 {
   "items": [
     {
       "id": "uuid",
-      "name": "Nome do local",
+      "name": "Nome do estabelecimento",
       "cuisine": "Japonesa",
-      "price_per_person": null,
+      "description": "Descrição específica do estabelecimento e de sua culinária.",
+      "price_per_person": 48.00,
       "rating": null,
       "address": "São Paulo - SP",
       "lat": -23.56,
       "lng": -46.66,
       "distance_km": 1.2,
+      "image_url": "https://exemplo.com/foto.jpg",
+      "image_attribution": "Crédito da fotografia",
+      "image_source_url": "https://exemplo.com/origem-da-foto",
+      "menu_url": "https://exemplo.com/cardapio",
+      "price_source_url": "https://exemplo.com/precos",
+      "verified_at": "2026-10-18T12:00:00Z",
       "source": "openstreetmap",
       "source_url": "https://www.openstreetmap.org/node/123"
     }
@@ -65,7 +72,7 @@ Resposta simplificada:
 }
 ```
 
-Os campos `price_per_person`, `rating`, `rating_count`, `image_url` e `website_url` podem ser `null` quando a fonte não os fornece.
+Preço, descrição, foto, crédito, origem da foto, cardápio e fonte do preço são obrigatórios para qualquer resultado. Avaliação e site oficial podem ser `null` quando não houver uma fonte confiável.
 
 ## `POST /api/recommend`
 
@@ -96,3 +103,4 @@ A resposta inclui `filters` (`cuisine`, `maxBudget`, `searchText` e `aiEnabled`)
 - `500`: falha ao consultar dados ou erro inesperado; a mensagem pública não expõe detalhes internos.
 - Limite geral: 60 chamadas por minuto por origem.
 - `POST /api/recommend`: 10 chamadas por minuto por origem.
+
