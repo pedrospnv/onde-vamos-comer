@@ -13,6 +13,7 @@ const CUISINE_QUERIES = new Map([
 const PRICE_LABELS = new Map([[1, "Econômico"], [2, "Moderado"], [3, "Caro"], [4, "Muito caro"]]);
 const DINING_CATEGORY = /restaurant|dining|food|coffee|caf[eé]|bar|pub|brewery|bakery|dessert|ice cream|pizzeria|pizza|burger|tea house|diner|fast food|bistro|snack|juice bar/i;
 const NON_DINING_CATEGORY = /supermarket|grocery store|convenience store|grocery market/i;
+const NON_DINING_NAME = /\\bsupermercado\\b|\\bsupermarket\\b|\\bgrocery\\b/i;
 
 export function isFoursquareConfigured() {
   return Boolean(process.env.FOURSQUARE_API_KEY?.trim());
@@ -37,8 +38,9 @@ function categoryLabel(categories = []) {
   return translations.find(([pattern]) => pattern.test(value))?.[1] || category;
 }
 
-function isDiningPlace(categories = []) {
+function isDiningPlace(categories = [], name = "") {
   if (!Array.isArray(categories)) return false;
+  if (NON_DINING_NAME.test(String(name))) return false;
   const names = categories.map((category) => category?.name).filter((name) => typeof name === "string");
   return !names.some((name) => NON_DINING_CATEGORY.test(name))
     && names.some((name) => DINING_CATEGORY.test(name));
@@ -97,7 +99,7 @@ function mapPlace(place, origin) {
   const photo = photoUrl(preferredPhoto(place.photos));
   const blockedFlags = new Set(["closed", "delete", "privatevenue", "doesnt_exist", "inappropriate"]);
   const flags = Array.isArray(place.unresolved_flags) ? place.unresolved_flags : [];
-  if (!isDiningPlace(place.categories) || place.date_closed || flags.some((flag) => blockedFlags.has(String(flag).toLowerCase()))) return null;
+  if (!isDiningPlace(place.categories, name) || place.date_closed || flags.some((flag) => blockedFlags.has(String(flag).toLowerCase()))) return null;
 
   return enrichRestaurant(place, {
     id: `fsq:${fsqId}`,
