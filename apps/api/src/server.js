@@ -14,6 +14,7 @@ import { isFoursquareConfigured, parseFoursquarePhotoUrl } from "./foursquare.js
 const app = express();
 const port = Number(process.env.PORT) || 3000;
 const frontendDist = fileURLToPath(new URL("../../web/dist/", import.meta.url));
+app.set("trust proxy", 1);
 const apiLimit = rateLimit({ windowMs: 60_000, limit: 60, standardHeaders: "draft-7", legacyHeaders: false });
 const aiLimit = rateLimit({ windowMs: 60_000, limit: 10, standardHeaders: "draft-7", legacyHeaders: false });
 const restaurantSearchLimit = rateLimit({ windowMs: 60_000, limit: 10, standardHeaders: "draft-7", legacyHeaders: false });
