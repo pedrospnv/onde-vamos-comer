@@ -465,7 +465,7 @@ main {
 .photo-credit:hover { background: white; text-decoration: underline; }
 .photo-license { position: absolute; top: 35px; left: 10px; padding: 5px 8px; border: 1px solid rgb(255 255 255 / 74%); border-radius: 999px; background: rgb(255 255 255 / 92%); color: #34483b; font-size: 9px; font-weight: 600; }
 .photo-license:hover { background: white; text-decoration: underline; }
-.photo-search-link { position: absolute; right: 10px; bottom: 10px; z-index: 1; display: inline-flex; align-items: center; gap: 4px; padding: 6px 9px; border: 1px solid rgb(255 255 255 / 74%); border-radius: 999px; background: rgb(255 255 255 / 94%); color: #34483b; font-size: 10px; font-weight: 650; box-shadow: 0 2px 8px rgb(29 45 36 / 8%); }
+.photo-search-link { position: absolute; right: 10px; bottom: 40px; z-index: 1; display: inline-flex; align-items: center; gap: 4px; padding: 6px 9px; border: 1px solid rgb(255 255 255 / 74%); border-radius: 999px; background: rgb(255 255 255 / 94%); color: #34483b; font-size: 10px; font-weight: 650; box-shadow: 0 2px 8px rgb(29 45 36 / 8%); }
 .photo-search-link:hover { background: white; text-decoration: underline; }
 
 .food-placeholder { display: flex; flex-direction: column; align-items: center; gap: 10px; color: #728579; }
