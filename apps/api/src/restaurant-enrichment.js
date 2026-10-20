@@ -31,7 +31,9 @@ const CURATED_PLACES = {
     menu_url: "https://www.estadaolanches.com.br/cardapio-portugues.pdf",
     image_url: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Webysther_20160305155624_-_Bar_e_Lanches_Estad%C3%A3o.jpg/1280px-Webysther_20160305155624_-_Bar_e_Lanches_Estad%C3%A3o.jpg",
     image_attribution: "Webysther Nunes · “Bar e Lanches Estadão” · CC BY-SA 4.0",
-    image_source_url: "https://commons.wikimedia.org/wiki/File:Webysther_20160305155624_-_Bar_e_Lanches_Estad%C3%A3o.jpg"
+    image_source_url: "https://commons.wikimedia.org/wiki/File:Webysther_20160305155624_-_Bar_e_Lanches_Estad%C3%A3o.jpg",
+    image_license_name: "CC BY-SA 4.0",
+    image_license_url: "https://creativecommons.org/licenses/by-sa/4.0/"
   },
   "le ble casa de paes": {
     cuisine: "Padaria e confeitaria",
@@ -147,7 +149,9 @@ const CURATED_PLACES = {
     website_url: "https://gruporubaiyat.com/pt/restaurantes/sao-paulo/a-figueira-rubaiyat",
     image_url: "https://live.staticflickr.com/4007/5140452522_77766198d6.jpg",
     image_attribution: "Jimmy Baikovicius · “Some Left Potatoes | IMG_6514” · CC BY-SA 2.0",
-    image_source_url: "https://www.flickr.com/photos/jikatu/5140452522/"
+    image_source_url: "https://www.flickr.com/photos/jikatu/5140452522/",
+    image_license_name: "CC BY-SA 2.0",
+    image_license_url: "https://creativecommons.org/licenses/by-sa/2.0/"
   },
   "jardim de napoli": {
     cuisine: "Italiana",
@@ -232,7 +236,7 @@ export function enrichRestaurant(place, mapped) {
     || (/^ceci(?: |$)/.test(name) ? CURATED_PLACES["ceci panificadora"] : null)
     || (/^requinte(?: |$)/.test(name) ? CURATED_PLACES["panificadora requinte"] : null)
     || (/^primicia(?: |$)/.test(name) ? CURATED_PLACES["primicia dos paes"] : null)
-    || (/^estadao(?: |$)/.test(name) ? CURATED_PLACES["estadao bar e lanches"] : null)
+    || (/estadao/.test(name) ? CURATED_PLACES["estadao bar e lanches"] : null)
     || (/^lellis(?: |$)/.test(name) ? CURATED_PLACES["lellis trattoria"] : null)
     || (/^veridiana(?: |$)/.test(name) ? CURATED_PLACES["veridiana pizzaria"] : null)
     || (/^urbe cafe(?: |$)/.test(name) ? CURATED_PLACES["urbe cafe bar"] : null)
@@ -247,6 +251,8 @@ export function enrichRestaurant(place, mapped) {
     image_url: curated.image_url || mapped.image_url || null,
     image_attribution: curated.image_attribution || mapped.image_attribution || null,
     image_source_url: curated.image_source_url || mapped.image_source_url || null,
+    image_license_name: curated.image_license_name || mapped.image_license_name || null,
+    image_license_url: curated.image_license_url || mapped.image_license_url || null,
     menu_url: curated.menu_url || mapped.menu_url || null,
     description_source_url: curated.description_source_url || curated.website_url || null
   };
