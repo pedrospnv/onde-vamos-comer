@@ -34,7 +34,7 @@ const failedPhotos = ref(new Set());
 const pageFilters = ref({ cuisine: "", maxBudget: 60, maxPriceLevel: "", q: "" });
 const pageSize = computed(() => mode.value === "google" ? 20 : 50);
 const cuisines = ["Todos", "Japonesa", "Italiana", "Brasileira", "Árabe", "Hambúrguer", "Vegetariana", "Chinesa", "Mexicana", "Indiana", "Mediterrânea", "Cafeteria", "Bar"];
-const title = computed(() => favoritesOnly.value ? "Seus lugares salvos" : items.value.length + (items.value.length === 1 ? " lugar encontrado" : " lugares encontrados"));
+const title = computed(() => busy.value && !items.value.length ? "Carregando restaurantes…" : favoritesOnly.value ? "Seus lugares salvos" : items.value.length + (items.value.length === 1 ? " lugar encontrado" : " lugares encontrados"));
 const hasKnownPrice = computed(() => (favoritesOnly.value ? [...favoriteItems.value.values()] : items.value).some((item) => item.price_per_person != null || (item.source === "curated" && item.menu_price_min != null)));
 const hasKnownRating = computed(() => (favoritesOnly.value ? [...favoriteItems.value.values()] : items.value).some((item) => item.rating != null));
 const sorted = computed(() => {
