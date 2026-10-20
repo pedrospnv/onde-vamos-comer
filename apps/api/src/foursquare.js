@@ -44,6 +44,24 @@ function isDiningPlace(categories = []) {
     && names.some((name) => DINING_CATEGORY.test(name));
 }
 
+function photoRank(photo) {
+  const classes = Array.isArray(photo?.classifications) ? photo.classifications : [];
+  if (classes.includes("food_or_drink")) return 0;
+  if (classes.includes("outdoor_or_storefront") || classes.includes("outdoor_building_exterior")) return 1;
+  if (classes.includes("indoor_or_ambience") || classes.includes("indoor_general")) return 2;
+  if (classes.includes("product")) return 3;
+  if (classes.includes("menu") || classes.includes("logos")) return 9;
+  return 4;
+}
+
+function preferredPhoto(photos) {
+  if (!Array.isArray(photos)) return null;
+  return photos
+    .map((photo, index) => ({ photo, index, rank: photoRank(photo) }))
+    .filter(({ photo, rank }) => rank < 9 && photo?.prefix && photo?.suffix)
+    .sort((a, b) => a.rank - b.rank || (Number(b.photo.width) * Number(b.photo.height)) - (Number(a.photo.width) * Number(a.photo.height)) || a.index - b.index)[0]?.photo || null;
+}
+
 function photoUrl(photo) {
   if (!photo?.prefix || !photo?.suffix) return null;
   const source = `${photo.prefix}300x300${photo.suffix}`;
@@ -76,7 +94,7 @@ function mapPlace(place, origin) {
   const menuUrl = safeUrl(place.menu);
   const websiteUrl = safeUrl(place.website);
   const sourceUrl = `https://foursquare.com/placemakers/review-place/${encodeURIComponent(fsqId)}`;
-  const photo = Array.isArray(place.photos) ? place.photos.map(photoUrl).find(Boolean) : null;
+  const photo = photoUrl(preferredPhoto(place.photos));
   const blockedFlags = new Set(["closed", "delete", "privatevenue", "doesnt_exist", "inappropriate"]);
   const flags = Array.isArray(place.unresolved_flags) ? place.unresolved_flags : [];
   if (!isDiningPlace(place.categories) || place.date_closed || flags.some((flag) => blockedFlags.has(String(flag).toLowerCase()))) return null;
