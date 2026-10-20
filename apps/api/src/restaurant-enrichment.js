@@ -218,6 +218,18 @@ const CURATED_PLACES = {
   }
 };
 
+// This photo is a verified Commons image of the exact Z Deli Pinheiros location.
+const PLACE_PHOTOS_BY_FSQ_ID = {
+  "537134c0498e61c8e4b6e339": {
+    image_url: "https://upload.wikimedia.org/wikipedia/commons/6/6e/Por_causa_da_cozinha_maior%2C_o_card%C3%A1pio_do_Z_Deli_de_Pinheiros_%2828963833135%29.jpg",
+    image_alt: "Lox and bagel servido no Z Deli de Pinheiros, com salmão defumado, cream cheese, cebola roxa, alcaparras e tomate.",
+    image_attribution: "Shoichi Iwashita · “Por causa da cozinha maior, o cardápio do Z Deli de Pinheiros” · CC BY 2.0",
+    image_source_url: "https://commons.wikimedia.org/wiki/File:Por_causa_da_cozinha_maior,_o_card%C3%A1pio_do_Z_Deli_de_Pinheiros_(28963833135).jpg",
+    image_license_name: "CC BY 2.0",
+    image_license_url: "https://creativecommons.org/licenses/by/2.0/"
+  }
+};
+
 function normalizeName(value) {
   return String(value || "")
     .normalize("NFD")
@@ -229,6 +241,8 @@ function normalizeName(value) {
 
 export function enrichRestaurant(place, mapped) {
   const name = normalizeName(place?.name);
+  const placePhoto = PLACE_PHOTOS_BY_FSQ_ID[String(place?.fsq_place_id || "")];
+  if (placePhoto) mapped = { ...mapped, ...placePhoto };
   const curated = CURATED_PLACES[name]
     || (/^outback(?: steakhouse)?(?: |$)/.test(name) ? CURATED_PLACES["outback steakhouse"] : null)
     || (/^rascal(?: |$)/.test(name) ? CURATED_PLACES.rascal : null)
@@ -254,6 +268,7 @@ export function enrichRestaurant(place, mapped) {
     description: curated.description || mapped.description || "",
     website_url: curated.website_url || mapped.website_url || null,
     image_url: curated.image_url || mapped.image_url || null,
+    image_alt: curated.image_alt || mapped.image_alt || null,
     image_attribution: curated.image_attribution || mapped.image_attribution || null,
     image_source_url: curated.image_source_url || mapped.image_source_url || null,
     image_license_name: curated.image_license_name || mapped.image_license_name || null,
