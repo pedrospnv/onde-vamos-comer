@@ -9,6 +9,7 @@ flowchart LR
   U[Pessoa no navegador] -->|Vue e HTTPS| E[Express no Render]
   E -->|RPC search_restaurants| S[(Supabase Postgres + PostGIS)]
   E -->|busca ao vivo sem persistência| F[Foursquare Places API]
+  E -->|busca ao vivo sem persistência| G[Google Places API]
   E -->|interpretação opcional| O[OpenAI Responses API]
   O -->|filtros estruturados| E
   E -->|resultados| U
@@ -29,10 +30,11 @@ flowchart LR
 ### API
 
 - `apps/api/src/server.js` configura Express, Helmet, CORS, limites de requisição, validação de entradas e endpoints.
-- `apps/api/src/restaurants.js` consulta Foursquare ao vivo quando `FOURSQUARE_API_KEY` existe; sem ela, consulta `search_restaurants` no Supabase.
+- `apps/api/src/restaurants.js` prioriza Google Places quando `GOOGLE_PLACES_API_KEY` existe; usa Foursquare como reserva e Supabase quando nenhuma fonte externa está configurada.
 - `apps/api/src/foursquare.js` normaliza os resultados temporários da API externa.
+- `apps/api/src/google-places.js` consulta e normaliza os resultados do Google Places sem armazená-los.
 - `apps/api/src/ai.js` extrai culinária, orçamento e texto livre. Usa regras locais se a chave da OpenAI não estiver configurada ou se a chamada falhar.
-- O modelo não escolhe nem inventa restaurantes. A lista vem do Supabase ou da busca ao vivo do Foursquare.
+- O modelo não escolhe nem inventa restaurantes. A lista vem do Supabase ou da fonte externa ativa.
 
 ### Banco de dados
 
@@ -45,11 +47,11 @@ flowchart LR
 
 1. A tela envia os filtros para `GET /api/restaurants` ou a frase para `POST /api/recommend`.
 2. A API valida os dados e, se necessário, interpreta a frase.
-3. A API consulta o Foursquare em tempo real ou chama `search_restaurants` no Supabase.
+3. A API consulta Google Places em tempo real, Foursquare como reserva, ou chama `search_restaurants` no Supabase.
 4. O PostGIS calcula a distância quando latitude e longitude foram fornecidas.
-5. No modo Foursquare, a interface identifica a faixa geral e mantém o preço por pessoa vazio; no modo Supabase, aplica a curadoria dos dados próprios.
+5. Nas fontes externas, a interface identifica o provedor e mantém o preço por pessoa vazio; no modo Supabase, aplica a curadoria dos dados próprios.
 
-Ao selecionar **Alterar**, o navegador solicita permissão de localização. Se autorizada, as coordenadas são usadas para limitar a busca e enviadas ao Foursquare no modo ao vivo; o app não as grava. A pessoa também pode digitar uma cidade ou bairro nos filtros. Favoritos próprios ficam no `localStorage`; favoritos Foursquare permanecem apenas na sessão.
+Ao selecionar **Alterar**, o navegador solicita permissão de localização. Se autorizada, as coordenadas são usadas na busca ao vivo; o app não as grava. A pessoa também pode digitar uma cidade ou bairro nos filtros. Favoritos próprios ficam no `localStorage`; favoritos das fontes externas permanecem apenas na sessão.
 
 ## Segurança e privacidade
 
@@ -59,4 +61,5 @@ Ao selecionar **Alterar**, o navegador solicita permissão de localização. Se 
 - A API limita chamadas gerais a 60 por minuto por origem e `/api/recommend` a 10 por minuto.
 - Sem login, o app não mantém perfis ou favoritos em servidor.
 - Se a integração OpenAI for habilitada, somente a frase digitada é enviada para extrair filtros. Coordenadas de localização são enviadas à API do próprio app para a busca geográfica, não à chamada da OpenAI.
-- A chave do Foursquare permanece no servidor. Respostas e imagens são entregues com `Cache-Control: no-store`, e a página `/privacidade` informa a transferência de localização quando a pessoa escolhe compartilhá-la.
+- As chaves dos provedores permanecem no servidor. Respostas do Google e Foursquare são entregues com `Cache-Control: no-store`; as páginas `/privacidade` e `/termos` descrevem fontes, atribuição e tratamento dos dados.
+

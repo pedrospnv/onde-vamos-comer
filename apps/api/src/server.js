@@ -7,7 +7,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import { interpretRequest } from "./ai.js";
-import { dataMode, searchRestaurants } from "./restaurants.js";
+import { dataMode, isGoogleEnterpriseEnabled, searchRestaurants } from "./restaurants.js";
+import { isGooglePlacesConfigured } from "./google-places.js";
 import { isFoursquareConfigured, parseFoursquarePhotoUrl } from "./foursquare.js";
 
 const app = express();
@@ -25,6 +26,7 @@ const filtersSchema = z.object({
   near: z.string().trim().max(120).optional().nullable(),
   limit: z.coerce.number().int().min(1).max(100).optional(),
   offset: z.coerce.number().int().min(0).max(10000).optional(),
+  pageToken: z.string().trim().max(2048).optional(),
   lat: z.coerce.number().min(-90).max(90).optional(),
   lng: z.coerce.number().min(-180).max(180).optional(),
   radiusKm: z.coerce.number().min(1).max(100).optional()
@@ -49,7 +51,7 @@ app.use("/api", apiLimit);
 app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
 app.get("/api/meta", async (_req, res) => {
   res.set("Cache-Control", "no-store");
-  res.json({ dataMode: await dataMode(), aiEnabled: Boolean(process.env.OPENAI_API_KEY), foursquareEnabled: isFoursquareConfigured() });
+  res.json({ dataMode: await dataMode(), aiEnabled: Boolean(process.env.OPENAI_API_KEY), foursquareEnabled: isFoursquareConfigured(), googlePlacesEnabled: isGooglePlacesConfigured(), googleEnterpriseFieldsEnabled: await isGoogleEnterpriseEnabled() });
 });
 
 app.get("/api/foursquare/photo", foursquarePhotoLimit, async (req, res, next) => {
@@ -88,10 +90,11 @@ app.get("/api/restaurants", restaurantSearchLimit, async (req, res, next) => {
   const parsed = filtersSchema.safeParse(req.query);
   if (!parsed.success) return res.status(400).json({ error: "Filtros inválidos." });
   try {
-    const items = await searchRestaurants(parsed.data);
+    const result = await searchRestaurants(parsed.data);
+    const items = result.items;
     const mode = await dataMode();
-    res.set("Cache-Control", mode === "foursquare" ? "no-store" : "private, no-cache");
-    res.json({ items, count: items.length, hasMore: mode === "foursquare" ? false : items.length === (parsed.data.limit ?? 50), dataMode: mode });
+    res.set("Cache-Control", mode === "foursquare" || mode === "google" ? "no-store" : "private, no-cache");
+    res.json({ items, count: items.length, hasMore: mode === "google" ? Boolean(result.nextPageToken) : mode === "foursquare" ? false : items.length === (parsed.data.limit ?? 50), nextPageToken: result.nextPageToken, dataMode: mode });
   } catch (error) { next(error); }
 });
 
@@ -108,7 +111,7 @@ app.post("/api/recommend", aiLimit, async (req, res, next) => {
   if (!parsed.success) return res.status(400).json({ error: "Escreva o que está procurando (até 500 caracteres)." });
   try {
     const filters = await interpretRequest(parsed.data.message);
-    const items = await searchRestaurants({
+    const result = await searchRestaurants({
       cuisine: filters.cuisine,
       maxBudget: filters.maxBudget ?? parsed.data.maxBudget,
       maxPriceLevel: parsed.data.maxPriceLevel,
@@ -118,15 +121,26 @@ app.post("/api/recommend", aiLimit, async (req, res, next) => {
       lng: parsed.data.lng,
       radiusKm: parsed.data.radiusKm
     });
+    const items = result.items;
     const mode = await dataMode();
-    res.set("Cache-Control", mode === "foursquare" ? "no-store" : "private, no-cache");
-    res.json({ filters, items, count: items.length, hasMore: false, budgetNotice: mode === "foursquare" && filters.maxBudget != null ? "A faixa de preço do Foursquare é geral e não equivale a um valor em reais por pessoa." : null, dataMode: mode });
+    res.set("Cache-Control", mode === "foursquare" || mode === "google" ? "no-store" : "private, no-cache");
+    const budgetNotice = mode === "foursquare" && filters.maxBudget != null
+      ? "A faixa de preço do Foursquare é geral e não equivale a um valor em reais por pessoa."
+      : mode === "google" && filters.maxBudget != null
+        ? "O Google não informa preço por pessoa em reais nesta configuração. Confira os valores no perfil ou cardápio do restaurante."
+        : null;
+    res.json({ filters, items, count: items.length, hasMore: mode === "google" ? Boolean(result.nextPageToken) : false, nextPageToken: result.nextPageToken, budgetNotice, dataMode: mode });
   } catch (error) { next(error); }
 });
 
 app.use(express.static(frontendDist));
 app.get("/privacidade", (_req, res, next) => {
   res.sendFile(path.join(frontendDist, "privacidade.html"), (error) => {
+    if (error) next(error);
+  });
+});
+app.get("/termos", (_req, res, next) => {
+  res.sendFile(path.join(frontendDist, "termos.html"), (error) => {
     if (error) next(error);
   });
 });
@@ -143,3 +157,4 @@ app.use((error, _req, res, _next) => {
 });
 
 app.listen(port, "0.0.0.0", () => console.log("API disponível na porta " + port));
+

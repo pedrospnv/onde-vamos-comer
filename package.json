@@ -7,7 +7,7 @@
     "dev:api": "node --watch apps/api/src/server.js",
     "dev:web": "vite --host 0.0.0.0",
     "import:openstreetmap": "node scripts/import-openstreetmap.js",
-    "check:api": "node --check apps/api/src/server.js && node --check apps/api/src/ai.js && node --check apps/api/src/foursquare.js && node --check apps/api/src/restaurants.js && node --check scripts/import-openstreetmap.js",
+    "check:api": "node --check apps/api/src/server.js && node --check apps/api/src/ai.js && node --check apps/api/src/foursquare.js && node --check apps/api/src/google-places.js && node --check apps/api/src/restaurants.js && node --check scripts/import-openstreetmap.js",
     "test": "node --test",
     "build": "npm run check:api && vite build",
     "start": "node apps/api/src/server.js"
@@ -30,3 +30,4 @@
   },
   "engines": { "node": ">=22.12" }
 }
+
