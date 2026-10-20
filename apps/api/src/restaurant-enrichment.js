@@ -220,7 +220,7 @@ const CURATED_PLACES = {
 
 // This photo is a verified Commons image of the exact Z Deli Pinheiros location.
 const PLACE_PHOTOS_BY_FSQ_ID = {
-  "537134c0498e61c8e4b6e339": {
+  "537134c0498e2e14ba6260cd": {
     image_url: "https://upload.wikimedia.org/wikipedia/commons/6/6e/Por_causa_da_cozinha_maior%2C_o_card%C3%A1pio_do_Z_Deli_de_Pinheiros_%2828963833135%29.jpg",
     image_alt: "Lox and bagel servido no Z Deli de Pinheiros, com salmão defumado, cream cheese, cebola roxa, alcaparras e tomate.",
     image_attribution: "Shoichi Iwashita · “Por causa da cozinha maior, o cardápio do Z Deli de Pinheiros” · CC BY 2.0",
