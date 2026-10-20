@@ -132,7 +132,16 @@ export async function searchGooglePlaces(filters = {}) {
     const providerMessage = typeof failureBody?.error?.message === "string"
       ? failureBody.error.message.replace(/AIza[\w-]+/g, "[REDACTED]").slice(0, 180)
       : "";
-    console.error("Google Places returned HTTP", response.status, providerStatus, providerMessage);
+    const providerDetails = Array.isArray(failureBody?.error?.details)
+      ? failureBody.error.details.slice(0, 3).map(({ reason, domain, metadata }) => ({
+        reason,
+        domain,
+        service: metadata?.service,
+        consumer: metadata?.consumer,
+        method: metadata?.method
+      }))
+      : [];
+    console.error("Google Places returned HTTP", response.status, providerStatus, providerMessage, JSON.stringify(providerDetails));
     const message = response.status === 429
       ? "A busca atingiu o limite de chamadas. Tente novamente mais tarde."
       : "O Google Places recusou a busca. Confira a chave, as restrições e o faturamento no Google Cloud.";
