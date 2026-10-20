@@ -9,6 +9,7 @@ const CUISINE_QUERIES = new Map([
   ["cafeteria", "Coffee shop"], ["bar", "Bar"]
 ]);
 const PRICE_LABELS = new Map([[1, "Econômico"], [2, "Moderado"], [3, "Caro"], [4, "Muito caro"]]);
+const DINING_CATEGORY = /restaurant|dining|food|coffee|caf[eé]|bar|pub|brewery|bakery|dessert|ice cream|pizzeria|pizza|burger|tea house|diner|fast food|bistro|snack|juice bar/i;
 
 export function isFoursquareConfigured() {
   return Boolean(process.env.FOURSQUARE_API_KEY?.trim());
@@ -31,6 +32,12 @@ function categoryLabel(categories = []) {
     [/coffee|café|cafeteria/, "Cafeteria"], [/bar|pub|brewery/, "Bar"]
   ];
   return translations.find(([pattern]) => pattern.test(value))?.[1] || category;
+}
+
+function isDiningPlace(categories = []) {
+  return Array.isArray(categories) && categories.some((category) =>
+    typeof category?.name === "string" && DINING_CATEGORY.test(category.name)
+  );
 }
 
 function photoUrl(photo) {
@@ -68,7 +75,7 @@ function mapPlace(place, origin) {
   const photo = Array.isArray(place.photos) ? place.photos.map(photoUrl).find(Boolean) : null;
   const blockedFlags = new Set(["closed", "delete", "privatevenue", "doesnt_exist", "inappropriate"]);
   const flags = Array.isArray(place.unresolved_flags) ? place.unresolved_flags : [];
-  if (place.date_closed || flags.some((flag) => blockedFlags.has(String(flag).toLowerCase()))) return null;
+  if (!isDiningPlace(place.categories) || place.date_closed || flags.some((flag) => blockedFlags.has(String(flag).toLowerCase()))) return null;
 
   return {
     id: `fsq:${fsqId}`,
@@ -121,7 +128,7 @@ export async function searchFoursquarePlaces(filters = {}) {
   const search = [cuisine, filters.q].filter(Boolean).join(" ").trim();
   params.set("query", search || "restaurant");
   params.set("limit", String(Math.min(Math.max(Number(filters.limit) || 50, 1), 50)));
-  params.set("sort", filters.lat != null && filters.lng != null ? "DISTANCE" : "POPULARITY");
+  params.set("sort", search ? "RELEVANCE" : filters.lat != null && filters.lng != null ? "DISTANCE" : "POPULARITY");
   if (filters.lat != null && filters.lng != null) {
     params.set("ll", `${filters.lat},${filters.lng}`);
     params.set("radius", String(Math.min(Math.max(Math.round((Number(filters.radiusKm) || 45) * 1000), 1000), 100000)));
@@ -161,3 +168,4 @@ export async function searchFoursquarePlaces(filters = {}) {
   const origin = filters.lat != null && filters.lng != null ? { lat: Number(filters.lat), lng: Number(filters.lng) } : null;
   return (Array.isArray(payload.results) ? payload.results : []).map((place) => mapPlace(place, origin)).filter(Boolean);
 }
+
