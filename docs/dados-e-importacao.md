@@ -56,4 +56,3 @@ npm run import:openstreetmap -- --export-json .\osm-export.json
 ```
 
 Overpass pode limitar ou atrasar consultas. Em caso de falha, tente novamente mais tarde ou configure outro endpoint permitido por `OVERPASS_URL`.
-
