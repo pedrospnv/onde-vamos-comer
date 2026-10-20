@@ -1,58 +1,42 @@
-# Dados e importação
+# Dados e curadoria
 
-## Fonte e cobertura
+## Catálogo ativo
 
-Os locais vêm do OpenStreetMap por meio da Overpass API. O importador consulta a relação municipal `298285` de São Paulo e inclui pontos mapeados como restaurante, fast food, café, bar, pub e sorveteria. A cobertura é do município de São Paulo, não do estado inteiro.
+O modo padrão do app consulta o catálogo próprio no Supabase, nas tabelas `curated_restaurants`, `curated_restaurant_photos` e `curated_menu_items`. A consulta de produção é somente leitura para o app. O catálogo atual contém 20 fichas publicadas do município de São Paulo; não cobre todo o município nem o estado.
 
-O OpenStreetMap é uma base colaborativa; não é uma listagem oficial, completa ou garantia de que um estabelecimento continua aberto. A importação inicial carregou cerca de 4,6 mil locais. A quantidade muda com as edições e consultas futuras.
+As fontes Google Places, Foursquare e OpenStreetMap/Overpass pertencem a integrações separadas. Elas não são chamadas no modo padrão; mudar `RESTAURANT_DATA_SOURCE` pode ativar chamadas externas e custos associados. A tabela legada `public.restaurants` recebe o importador OSM, mas não é a fonte do catálogo curado.
 
-Os dados são publicados sob a [Open Database License (ODbL)](https://opendatacommons.org/licenses/odbl/). A aplicação atribui os contribuidores do OpenStreetMap e mantém `source`, `external_id` e `source_url` em cada registro.
+## Limites conhecidos do catálogo atual
 
-Quando `GOOGLE_PLACES_API_KEY` está configurada, a busca consulta Google Places ao vivo; Foursquare continua disponível como reserva. Os resultados externos não são gravados no Supabase nem armazenados em cache pelo app; as chaves ficam no servidor. A busca Google devolve no máximo 60 resultados por consulta e não é um catálogo completo de todo o estado de São Paulo.
-
-## Qualidade dos campos
-
-- **Nome e coordenadas:** usados quando presentes na fonte.
-- **Culinária:** classificação por tags OSM; quando não há informação, fica como `Não informada`.
-- **Endereço e descrição:** podem estar incompletos ou ser texto livre da comunidade. A descrição publicada precisa ser específica e ter pelo menos 40 caracteres.
-- **Preço, cardápio e imagens:** não são fornecidos de forma confiável pelo OSM. O app não estima nem substitui esses dados por conteúdo ilustrativo.
-- **Situação comercial:** só é considerada verificada por até 180 dias após a conferência. Alterações em nome, endereço, descrição, culinária, preço, foto, cardápio ou fonte invalidam automaticamente essa conferência.
+- Há 20 fotos principais, todas com crédito, licença e página de origem. Algumas imagens são de pratos relacionados ao restaurante, não necessariamente da fachada ou do interior. A página de origem permite conferir o contexto.
+- Existem 50 preços de itens de menu. Nenhum está marcado como atual: 19 são históricos e 31 precisam de confirmação. A interface identifica essa condição e não transforma preço de prato/combinação em gasto por pessoa.
+- As 20 fichas estão sem coordenadas no banco. A API tem coordenadas auxiliares para cinco slugs; a distância, portanto, aparece apenas para uma parte da seleção. Não preencha coordenadas estimadas sem checar o endereço e a origem.
+- O catálogo não tem avaliações nem horários de funcionamento. Esses campos ficam como não informados.
+- A verificação editorial da ficha expira após 180 dias; ela não significa monitoramento automático nem confirmação diária de cardápios ou horários.
 
 ## Critérios de publicação
 
-Um restaurante só aparece quando está publicado e tem culinária identificada, descrição específica, preço por pessoa maior que zero, cardápio oficial, fonte do preço, foto real com crédito e link de origem, além de `verified_at` preenchido nos últimos 180 dias. Todos os links precisam usar HTTPS. RLS e a função de busca aplicam os mesmos critérios; a interface também rejeita registros incompletos e oculta fotos que não carregam.
+Uma ficha publicada deve ter nome, culinária, descrição específica e fonte da descrição, endereço, link de origem, verificação recente, foto principal com licença/crédito/página de origem e ao menos um item de menu com fonte, data consultada, modalidade e estado do preço. Coordenadas, website, menu e estimativa por pessoa são opcionais; quando desconhecidos, devem continuar nulos.
 
-Preencha os campos na tabela `public.restaurants` somente depois de conferir o estabelecimento e as fontes. `verified_at` é a data da conferência manual; não a atualize por rotina automática. Se algum dado relevante mudar, refaça a verificação para tornar o registro visível novamente.
+`verified_at` indica a revisão da ficha, não que todos os preços ainda sejam válidos. Cada item tem `price_status`: `current`, `needs_confirmation` ou `historical`. Só dados efetivamente verificados podem ser marcados `current`. Preço de unidade, prato, porção, combo ou delivery não é uma estimativa de gasto por pessoa.
 
-## Esquema
+## Tabelas
 
-`public.restaurants` guarda:
+- `curated_restaurants`: nome, endereço, culinária, descrição, fontes, coordenadas opcionais, preço por pessoa opcional, status e data da revisão.
+- `curated_restaurant_photos`: URL, crédito, licença, página de origem, foto principal e data de verificação.
+- `curated_menu_items`: nome do item, valor, base do preço, modalidade, fonte, data consultada e estado de confirmação.
+- `restaurants`: tabela legada alimentada pelo importador OSM. Não confundir com o catálogo curado servido por padrão.
 
-- Identidade: `id`, `name`, `slug`.
-- Classificação: `cuisine`, `description`, `tags`.
-- Preço e nota opcionais: `price_per_person`, `rating`, `rating_count`.
-- Dados obrigatórios para aparecer: `image_url`, `image_attribution`, `image_source_url`, `menu_url`, `price_source_url`, `verified_at`.
-- Endereço: `address`, `city`, `state` e `location` em `geography(Point, 4326)`.
-- Links: `website_url`, `source_url`.
-- Proveniência e sincronização: `source`, `external_id`, `last_synced_at`.
-- Estado: `status` (`draft` ou `published`) e `is_demo` fixo em `false`.
+RLS está habilitada nas quatro tabelas. As policies do catálogo permitem leitura somente de registros publicados e revisados nos últimos 180 dias. O serviço web usa `SUPABASE_PUBLISHABLE_KEY`; a chave `service_role` não deve ser concedida ao front-end nem ao Render.
 
-RLS permite leitura anônima somente dos restaurantes publicados que passam por todos os critérios de curadoria. A função Postgres `search_restaurants` repete esses critérios e aplica paginação, filtros textuais, distância e ordenação.
+## Atualização editorial
 
-Na busca Google, a configuração básica não solicita preço, avaliação ou fotos. A opção de solicitar preço geral e avaliação usa campos de nível Enterprise; valores em reais por pessoa continuam indisponíveis. Confirme detalhes diretamente com o restaurante. Favoritos dos provedores externos ficam somente na sessão atual.
+Atualize registros do catálogo após conferir as páginas de origem. Mantenha a licença, o crédito e o link da imagem; registre a data real de consulta de cada item. Se a foto for de um prato, descreva-a como imagem do prato. Não declare preço atual, horário, avaliação ou coordenada sem fonte.
 
-## Importar ou atualizar
+O catálogo curado ainda não tem um painel administrativo nem sincronização automática. A inclusão de fichas é feita por alteração administrativa revisada no Supabase. Não atualize `verified_at` em lote para prolongar a publicação sem revisar a informação.
 
-1. Configure `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` em `.env` local. Não configure a chave administrativa no Render nem em `VITE_*`.
-2. Rode `npm run import:openstreetmap`.
-3. Confira no terminal a contagem `imported`, `retired` e `updatedAt`.
+## Importador OpenStreetMap legado
 
-O script lê o Overpass, faz upsert em lotes de 500 por `source,external_id` e marca como `draft` registros publicados que não apareceram na resposta atual. Se a consulta vier vazia, ele aborta antes de alterar registros existentes. A execução escreve no banco: confirme que `SUPABASE_URL` aponta para o projeto Onde Vamos? antes de rodar.
+O script `npm run import:openstreetmap` consulta a área municipal de São Paulo (relação OSM `298285`) pela Overpass API e escreve na tabela `public.restaurants`. Execute localmente com `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` apontados ao projeto certo; o script pode atualizar e retirar registros dessa tabela. Ele não cria fichas curadas nem preços, fotos licenciadas ou avaliações. Use `--export-json` para revisar os resultados sem gravar.
 
-Para exportar a resposta sem gravar no banco:
-
-```powershell
-npm run import:openstreetmap -- --export-json .\osm-export.json
-```
-
-Overpass pode limitar ou atrasar consultas. Em caso de falha, tente novamente mais tarde ou configure outro endpoint permitido por `OVERPASS_URL`.
+Os dados OSM são colaborativos e licenciados sob [ODbL](https://opendatacommons.org/licenses/odbl/). A importação não é uma lista oficial ou completa de estabelecimentos.

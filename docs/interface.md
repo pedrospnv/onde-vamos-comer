@@ -2,22 +2,27 @@
 
 ## Direção visual
 
-A interface usa uma hierarquia editorial simples e cores discretas: fundo claro, verde escuro para ações e um acento quente nos detalhes. O conteúdo prioriza busca, filtros e informações verificáveis, sem mascote, personagem ou efeitos visuais associados a uma IA.
+A interface usa fundo claro, tipografia de leitura direta e detalhes em verde e tons quentes. O foco é comparar lugares e consultar fontes, com mensagens explícitas quando preço, avaliação, horário ou distância não existem.
 
-No modo Supabase, os cards exigem foto real com crédito e origem, cardápio, preço em reais com fonte e verificação recente. No Google Places, os cards identificam o provedor, exibem a ficha do Google Maps e não inventam preço, foto ou avaliação; esses campos não são solicitados na configuração básica. No Foursquare, a faixa geral (`$` a `$$$$`) não representa gasto por pessoa; a consulta usa apenas campos Pro e não pede fotos Premium. Se a imagem falhar ou não existir, aparece uma ilustração da culinária. A imagem japonesa do hero também é ilustrativa e não representa um estabelecimento específico.
+## Comportamento do catálogo curado
 
-## Comportamento por tela
+- A seleção atual tem 20 fichas do município de São Paulo.
+- Cada ficha tem uma imagem principal licenciada e creditada. Algumas imagens mostram pratos e não a fachada ou o interior; a ficha liga à fonte original.
+- Os preços são de itens de menu. No conjunto atual, 19 valores estão marcados como históricos e 31 precisam de confirmação; nenhum está confirmado como atual. O app não oferece filtro de gasto por pessoa neste modo.
+- Coordenadas estão disponíveis apenas para parte das fichas, então localização e distância são parciais. Horários e avaliações não estão cadastrados.
+- Fichas de catálogo não são mantidas por atualizações automáticas. A data de revisão não substitui a conferência direta com o restaurante.
+
+Google Places e Foursquare são integrações opcionais, desligadas no modo padrão. A imagem japonesa do hero é ilustrativa e não representa um dos restaurantes.
+
+## Telas e acessibilidade
 
 - **Desktop:** hero em duas colunas, filtros em linha e grade de três cards.
-- **Tablet:** largura de leitura limitada, grade de dois cards e áreas de toque preservadas.
-- **Celular (até 640 px):** hero e seção explicativa empilhados, card em uma coluna, filtros verticais e navegação de culinárias com rolagem horizontal.
-- **Celular estreito (até 380 px):** margens e controles compactados para larguras a partir de 320 px.
-- **Acessibilidade:** foco visível no teclado, controles com nomes acessíveis, estados de botão e suporte a `prefers-reduced-motion`.
-- Na primeira visita, um aviso oferece usar o GPS, escolher um bairro ou continuar sem localização. A permissão do navegador só é solicitada após o clique; ao permitir, os restaurantes do catálogo são ordenados por distância em linha reta. O GPS pode ser desativado ao digitar uma cidade ou bairro.
+- **Tablet:** conteúdo com largura limitada e grade de dois cards.
+- **Celular até 640 px:** hero empilhado, cards em uma coluna, filtros verticais e culinárias com rolagem horizontal.
+- **Celular estreito até 380 px:** controles compactados a partir de 320 px.
+- Foco de teclado visível, nomes acessíveis para controles e respeito a `prefers-reduced-motion`.
+- GPS só é solicitado após o clique. A pessoa pode negar, escolher bairro ou continuar sem localização.
 
-## Área para melhorias futuras
+## Melhorias que dependem de dados
 
-- Curadoria de fotos autorizadas, cardápios e preços atuais para os restaurantes elegíveis.
-- Testes automatizados em larguras comuns e leitores de tela.
-- Testes automatizados em larguras comuns e leitores de tela.
-- Navegação por mapa e fluxos de cadastro, caso façam parte do escopo futuro.
+Fotos de fachada/interior, coordenadas para todas as fichas, preços atuais, horários e avaliações exigem fontes públicas confiáveis ou conferência dos estabelecimentos. A interface pode exibir esses dados quando a curadoria os receber; hoje não deve inventá-los.

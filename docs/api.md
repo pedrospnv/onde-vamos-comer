@@ -19,11 +19,11 @@ Informa o provedor ativo e se as chaves externas estão configuradas.
 ```
 
 `aiEnabled` indica presença de `OPENAI_API_KEY`; não valida a chave nem garante que a API externa esteja disponível.
-`dataMode` é `curated` por padrão quando o Supabase está configurado. Isso consulta somente o catálogo editorial próprio e não chama APIs de terceiros. Para selecionar outra fonte, configure `RESTAURANT_DATA_SOURCE` com `google`, `foursquare` ou `openstreetmap`; uma chave de provedor sozinha não ativa chamadas.
+No deploy atual, `dataMode` é `curated`. Esse modo consulta apenas o catálogo editorial próprio e não chama APIs de terceiros. Para selecionar outra fonte, configure `RESTAURANT_DATA_SOURCE` com `google`, `foursquare` ou `openstreetmap`; uma chave de provedor sozinha não ativa chamadas.
 
 ## Catálogo próprio
 
-O catálogo inicial é mantido nas tabelas `curated_restaurants`, `curated_restaurant_photos` e `curated_menu_items`. A API é somente de leitura. Apenas linhas publicadas com ficha verificada nos últimos 180 dias são visíveis ao cliente anônimo. Fotos precisam guardar crédito, licença e página de origem; preços de cardápio guardam modalidade, fonte, data consultada e estado de confirmação.
+O catálogo tem 20 fichas e é mantido nas tabelas `curated_restaurants`, `curated_restaurant_photos` e `curated_menu_items`. A API é somente de leitura. Apenas linhas publicadas com ficha verificada nos últimos 180 dias são visíveis ao cliente anônimo. Fotos guardam crédito, licença e página de origem; preços de cardápio guardam modalidade, fonte, data consultada e estado de confirmação. No conjunto atual, 19 valores são históricos e 31 precisam de confirmação; não há valores marcados como atuais.
 
 ### `GET /api/catalog/restaurants`
 
@@ -96,7 +96,7 @@ Resposta simplificada (os domínios `exemplo.com` e os valores abaixo são place
 }
 ```
 
-Preço por pessoa, avaliação e coordenadas podem ser `null` quando não houver uma fonte confiável. O catálogo guarda separadamente preços individuais de menu; esses preços não significam custo médio por pessoa. O front-end mostra a data consultada e sinaliza os valores que precisam de confirmação.
+Preço por pessoa, avaliação e coordenadas podem ser `null` quando não houver uma fonte confiável. No banco atual, as 20 fichas estão sem coordenadas; a API mantém coordenadas auxiliares para cinco locais, então distância não está disponível para todo o catálogo. O catálogo guarda separadamente preços individuais de menu; esses preços não significam custo médio por pessoa. O front-end mostra a data consultada e sinaliza os valores que precisam de confirmação.
 
 No modo Google, os resultados são consultados ao vivo em páginas de até 20; o endpoint pode fornecer até 60 resultados por consulta. `pageToken` encaminha a próxima página. A configuração padrão não solicita preço, avaliação ou fotos; são campos com faturamento mais alto. Respostas usam `no-store` e não são persistidas. O Google recebe bairro/cidade digitado ou coordenadas quando a pessoa permite usar o GPS. A busca é por relevância e não constitui cobertura completa de São Paulo.
 
