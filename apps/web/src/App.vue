@@ -251,7 +251,7 @@ onMounted(async () => {
         <div class="hero-copy">
           <div class="eyebrow"><MapPin :size="14" /> UM GUIA LOCAL DE SÃO PAULO</div>
           <h1>Boa comida.<br /><em>Boa escolha.</em></h1>
-          <p>Descubra lugares para comer por culinária, distância e orçamento. Informações ausentes ficam claras, sem preço ou avaliação inventados.</p>
+          <p v-if="mode === 'google'">Descubra restaurantes por culinária e bairro. Confira preços, cardápios e funcionamento no perfil oficial do estabelecimento.</p>\n          <p v-else>Descubra lugares para comer por culinária, distância e orçamento. Informações ausentes ficam claras, sem preço ou avaliação inventados.</p>
         </div>
         <div class="hero-food">
           <img src="/images/japonesa.webp" alt="Sushi e sashimi, imagem ilustrativa de culinária japonesa" fetchpriority="high" />
@@ -314,10 +314,10 @@ onMounted(async () => {
       </section>
 
       <section class="how">
-        <div class="how-copy"><div class="kicker">COMO FUNCIONA</div><h2>Escolha com mais<br />clareza e menos dúvida.</h2><p>Veja lugares e suas faixas gerais de preço. Para valores em reais por pessoa, confira o cardápio oficial do restaurante.</p><button @click="goTop">Buscar um lugar <ArrowRight :size="15" /></button></div>
+        <div class="how-copy"><div class="kicker">COMO FUNCIONA</div><h2>Escolha com mais<br />clareza e menos dúvida.</h2><p v-if="mode === 'google'">Compare os restaurantes e abra suas fichas no Google Maps. Confirme cardápios e valores diretamente com cada estabelecimento.</p><p v-else>Veja lugares e suas faixas gerais de preço. Para valores em reais por pessoa, confira o cardápio oficial do restaurante.</p><button @click="goTop">Buscar um lugar <ArrowRight :size="15" /></button></div>
         <div class="steps">
           <div><span>01</span><i><MessageCircle :size="19" /></i><section><strong>Diga o que está procurando</strong><p>Um prato, culinária ou bairro já ajuda.</p></section></div>
-          <div><span>02</span><i><Wallet :size="19" /></i><section><strong>Defina seu orçamento</strong><p>Escolha um valor aproximado por pessoa.</p></section></div>
+          <div><span>02</span><i><Wallet :size="19" /></i><section><strong>{{ mode === 'google' ? 'Confira cardápio e preços' : 'Defina seu orçamento' }}</strong><p>{{ mode === 'google' ? 'Os valores são confirmados no perfil oficial do restaurante.' : 'Escolha um valor aproximado por pessoa.' }}</p></section></div>
           <div><span>03</span><i><Compass :size="19" /></i><section><strong>Compare os lugares</strong><p>Veja distância e confira os detalhes.</p></section></div>
         </div>
       </section>
