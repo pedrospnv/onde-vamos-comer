@@ -311,7 +311,65 @@ onMounted(async () => {
       </div>
       <div class="location-prompt-actions">
         <button class="location-use-button" @click="findLocation">Usar minha localização</button>
-        <button class="location-manual-button" @click="chooseNeighborhood">Buscar…2472 tokens truncated…tração de '+item.cuisine">{{ foodIcon(item.cuisine) }}</div>
+        <button class="location-manual-button" @click="chooseNeighborhood">Buscar por bairro</button>
+        <button class="location-dismiss-button" @click="closeLocationPrompt()">Agora não</button>
+      </div>
+    </section>
+    <main>
+      <section class="hero">
+        <div class="hero-copy">
+          <div class="eyebrow"><MapPin :size="14" /> UM GUIA LOCAL DE SÃO PAULO</div>
+          <h1>Boa comida.<br /><em>Boa escolha.</em></h1>
+          <p v-if="mode === 'google'">Descubra restaurantes por culinária e bairro. Confira preços, cardápios e funcionamento no perfil oficial do estabelecimento.</p>
+          <p v-else-if="mode === 'curated'">Explore 20 restaurantes selecionados por culinária e bairro. Os valores são de itens do menu; preços por pessoa e distância não estão disponíveis para todas as fichas.</p>
+          <p v-else>Descubra lugares para comer por culinária, distância e orçamento. Informações ausentes ficam claras, sem preço ou avaliação inventados.</p>
+        </div>
+        <div class="hero-food">
+          <img src="/images/japonesa.webp" alt="Sushi e sashimi, imagem ilustrativa de culinária japonesa" fetchpriority="high" />
+          <span class="hero-food-note">Imagem ilustrativa</span>
+          <div class="hero-food-caption"><small>Um sabor da cidade</small><strong>Culinária japonesa</strong></div>
+        </div>
+      </section>
+
+      <section id="search-panel" class="search-panel">
+        <div class="search-heading"><span class="search-heading-icon"><Search :size="17" /></span><div><strong>O que você quer comer?</strong><small>Busque por prato, culinária ou bairro</small></div></div>
+        <form class="search-row" @submit.prevent="searchByDescription">
+          <Search :size="19" class="search-symbol" /><input v-model="query" @input="interpretedQuery = false" :placeholder="mode === 'curated' ? 'Ex.: japonesa em Pinheiros' : 'Ex.: japonês em Pinheiros até R$ 50'" aria-label="Descreva o que procura" />
+          <button type="button" class="filter-button" :aria-expanded="filtersOpen" aria-controls="search-filters" @click="filtersOpen = !filtersOpen"><SlidersHorizontal :size="16" /><span>Filtros</span></button>
+          <button type="submit" class="submit-button" :disabled="busy"><Search :size="16" />{{ busy ? "Buscando..." : "Encontrar" }}<ArrowRight :size="15" /></button>
+        </form>
+        <div v-if="filtersOpen" id="search-filters" class="filter-box">
+          <label v-if="['curated','foursquare','google'].includes(mode)"><span><MapPin :size="15" /> Cidade ou bairro</span><input v-model="near" maxlength="120" placeholder="Ex.: Pinheiros, São Paulo" aria-label="Cidade ou bairro para buscar" @input="useTypedLocation" /></label>
+          <label v-if="mode === 'foursquare' || (mode === 'google' && googleEnterpriseEnabled)"><span><Wallet :size="15" /> Faixa geral de preço</span><select v-model="priceLevel"><option value="">Todas as faixas</option><option value="1">Econômico ($)</option><option value="2">Moderado ($$)</option><option value="3">Caro ($$$)</option><option value="4">Muito caro ($$$$)</option></select></label>
+          <label v-else-if="!['google','curated'].includes(mode)"><span><Wallet :size="15" /> Até quanto por pessoa?</span><div class="money-input"><b>R$</b><input v-model.number="budget" type="number" min="10" max="500" step="5" /><small>/ pessoa</small></div></label>
+          <p v-else-if="mode === 'google'" class="filter-note">Preços em reais não estão disponíveis nesta configuração do Google.</p>
+          <p v-else-if="mode === 'curated'" class="filter-note">O catálogo mostra valores de itens do menu, sem estimativa de gasto por pessoa.</p>
+          <label><span><Utensils :size="15" /> Tipo de comida</span><select v-model="cuisine"><option value="">Qualquer tipo</option><option v-for="c in cuisines.slice(1)" :key="c">{{ c }}</option></select></label>
+          <button class="apply-button" @click="activeCuisine = cuisine || 'Todos'; search()">Aplicar filtros <ArrowRight :size="15" /></button>
+        </div>
+        <div class="popular"><span>Popular agora</span><template v-if="['foursquare','google','curated'].includes(mode)"><button @click="quickSearch('comida japonesa')">Comida japonesa</button><button @click="quickSearch('comida brasileira')">Comida brasileira</button><button @click="quickSearch('comida vegetariana')">Vegetariano</button></template><template v-else><button @click="quickSearch('japonesa até R$ 60 por pessoa')">Japa até R$ 60</button><button @click="quickSearch('almoço brasileiro até R$ 35')">Almoço barato</button><button @click="quickSearch('comida vegetariana até R$ 45')">Vegetariano</button></template></div>
+      </section>
+
+      <section class="results" :aria-busy="busy">
+        <div class="results-head"><div><div class="kicker">{{ mode === 'curated' ? 'SELEÇÃO DE SÃO PAULO' : 'LUGARES PERTO E PELO SEU ESTILO' }}</div><h2>{{ title }}</h2></div>
+          <label class="sort"><span>Ordenar por</span><select v-model="sortBy"><option value="recommended">Recomendados</option><option value="price" :disabled="!hasKnownPrice">{{ ['foursquare','google'].includes(mode) ? 'Faixa geral' : mode === 'curated' ? 'Menor preço de item' : 'Menor preço por pessoa' }}{{ hasKnownPrice ? "" : " (indisponível)" }}</option><option value="rating" :disabled="!hasKnownRating">Melhor avaliação{{ hasKnownRating ? "" : " (indisponível)" }}</option></select><ChevronDown :size="13" /></label>
+        </div>
+        <div class="tabs"><button v-for="c in cuisines" :key="c" :class="{ active: activeCuisine === c }" @click="setCuisine(c)">{{ c }}</button></div>
+        <div v-if="error" class="error" role="status" aria-live="polite"><span>{{ error }}</span><button aria-label="Fechar aviso" @click="error = ''"><X :size="15" /></button></div>
+        <div v-if="mode === 'google'" class="demo-label"><i></i> Resultados consultados ao vivo no Google. Endereços e fichas podem ser abertos no Google Maps; preço por pessoa, cardápio e fotos não são incluídos nesta configuração. <a href="https://www.google.com/maps" target="_blank" rel="noreferrer" translate="no">Google Maps</a> · <a href="/termos">Termos</a></div>
+        <div v-else-if="mode === 'foursquare'" class="demo-label"><i></i> Resultados consultados ao vivo no Foursquare. A faixa ($–$$$$) é geral, não representa gasto em reais por pessoa. Fotos só aparecem quando a busca básica fornece uma imagem; não usamos a consulta Premium de fotos. Favoritos desta fonte ficam somente nesta sessão. <a href="https://foursquare.com" target="_blank" rel="noreferrer">Dados: Foursquare</a></div>
+        <div v-else-if="mode === 'curated'" class="demo-label"><i></i> Catálogo próprio com 20 fichas. As fotos têm crédito e licença; algumas mostram pratos, não a fachada. Valores de menu são históricos ou precisam de confirmação, e não representam gasto por pessoa.</div>
+        <div v-else-if="mode === 'openstreetmap'" class="demo-label"><i></i> Nesta busca aparecem apenas cadastros próprios verificados. Configure a chave do Google Places para ativar resultados ao vivo. <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">Créditos do mapa: OpenStreetMap</a></div>
+        <div v-else-if="mode === 'not_configured' || (!foursquareEnabled && !googlePlacesEnabled)" class="demo-label"><i></i> Configure SUPABASE_URL e SUPABASE_PUBLISHABLE_KEY no servidor para carregar o catálogo próprio. Foursquare e Google só consultam dados se forem selecionados explicitamente em RESTAURANT_DATA_SOURCE.</div>
+        <div v-if="query && interpretedQuery && !error" class="search-hint"><Check :size="15" /> Busca aplicada com base no que você descreveu.</div>
+        <div v-if="budgetNotice || (['foursquare','google','curated'].includes(mode) && query && /r\s?\$/i.test(query))" class="budget-note"><Wallet :size="15" /> {{ budgetNotice || (mode === 'google' ? "O Google não informa preço por pessoa em reais nesta configuração. Confirme os valores no perfil ou cardápio do restaurante." : mode === 'curated' ? "O catálogo lista preços de pratos e combos, mas não estima gasto por pessoa. Confira o cardápio e confirme o valor com o restaurante." : "O Foursquare não informa preço por pessoa em reais. Use a faixa geral nos filtros e confirme valores no cardápio oficial.") }}</div>
+        <div v-else-if="!['foursquare','google'].includes(mode) && items.some(item => item.price_per_person == null)" class="budget-note"><Wallet :size="15" /> {{ mode === 'curated' ? 'Os valores exibidos são de pratos ou combos, não estimativas por pessoa. Confirme o valor com o restaurante antes de ir.' : `Os locais sem preço cadastrado podem ultrapassar R$ ${Number(budget).toLocaleString('pt-BR')} por pessoa. Confirme o valor com o restaurante antes de ir.` }}</div>
+        <div v-if="busy" class="cards"><div v-for="n in 3" :key="n" class="skeleton"></div></div>
+        <div v-else-if="sorted.length" class="cards">
+          <article v-for="(item,index) in sorted" :key="item.id" class="card">
+            <div class="photo" :class="'photo-'+(index%6)">
+              <img v-if="item.image_url && !failedPhotos.has(photoKey(item))" :src="item.image_url"  :alt="item.image_alt || 'Foto do local '+item.name" loading="lazy" decoding="async" @error="markPhotoUnavailable(item)" />
+              <div v-else class="food" :aria-label="'Ilustração de '+item.cuisine">{{ foodIcon(item.cuisine) }}</div>
               <a v-if="!item.image_url || failedPhotos.has(photoKey(item))" class="photo-search-link" :href="mapsUrl(item)" target="_blank" rel="noreferrer" :aria-label="'Ver fotos de '+item.name+' no Google Maps'">Ver fotos no Maps <ArrowUpRight :size="12" /></a>
               <a v-if="item.image_url && !failedPhotos.has(photoKey(item))" class="photo-credit" :href="item.image_source_url || item.source_url" target="_blank" rel="noreferrer" :aria-label="'Crédito e fonte da imagem: '+(item.image_attribution || 'Foursquare')">Foto: {{ item.image_attribution || 'Foursquare' }}</a>
               <a v-if="item.image_license_url && !failedPhotos.has(photoKey(item))" class="photo-license" :href="item.image_license_url" target="_blank" rel="license noreferrer">{{ item.image_license_name || "Licença da foto" }}</a>
