@@ -626,6 +626,7 @@ footer small a { color: var(--green); text-decoration: underline; text-underline
 .modal-art { height: auto; aspect-ratio: 2 / 1; position: relative; overflow: hidden; margin: -5px -5px 17px; border-radius: 12px; background: #e9eee8; }
 .modal-art img { width: 100%; height: 100%; display: block; object-fit: cover; }
 .modal-art a { max-width: calc(100% - 20px); position: absolute; bottom: 9px; left: 9px; overflow: hidden; padding: 5px 8px; border-radius: 999px; background: rgb(255 255 255 / 94%); color: #34483b; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.modal-art a:not(.license-link) { max-width: calc(100% - 130px); }
 .modal-art .license-link { right: 9px; left: auto; }
 .modal h2 { margin: 6px 0 8px; font: 800 24px/1.2 "Manrope", "DM Sans", sans-serif; }
 .modal > p { color: var(--muted); font-size: 12px; line-height: 1.6; }
