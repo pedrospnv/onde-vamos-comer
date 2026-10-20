@@ -56,6 +56,14 @@ test("maps live results to display data and sends bounded, non-cached search", a
         categories: [{ name: "Shopping Mall" }],
         location: { locality: "São Paulo", region: "SP" }
       },
+      {
+        fsq_place_id: "grocery-123",
+        name: "Supermercado Bonanza",
+        latitude: -23.56,
+        longitude: -46.66,
+        categories: [{ name: "Bakery" }],
+        location: { locality: "São Paulo", region: "SP" }
+      },
       { fsq_place_id: "closed-123", name: "Fechado", latitude: -23.5, longitude: -46.6, date_closed: "2025-01-01" }
     ] }), { status: 200, headers: { "content-type": "application/json" } });
   };
@@ -75,6 +83,7 @@ test("maps live results to display data and sends bounded, non-cached search", a
   assert.equal(requestOptions.headers.Authorization, "Bearer test-key-do-not-use");
   assert.equal(requestOptions.headers["X-Places-Api-Version"], "2025-06-17");
   assert.equal(places.length, 1);
+  assert.equal(places.some((place) => place.name === "Supermercado Bonanza"), false);
   assert.equal(places[0].cuisine, "Japonesa");
   assert.equal(places[0].price_level, 2);
   assert.equal(places[0].price_level_label, "Moderado");
