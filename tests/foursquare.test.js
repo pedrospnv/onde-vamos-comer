@@ -48,6 +48,14 @@ test("maps live results to display data and sends bounded, non-cached search", a
         website: "https://example.org",
         photos: [{ prefix: "https://fastly.4sqi.net/img/general/", suffix: "photo.jpg" }]
       },
+      {
+        fsq_place_id: "mall-123",
+        name: "Shopping Center",
+        latitude: -23.56,
+        longitude: -46.66,
+        categories: [{ name: "Shopping Mall" }],
+        location: { locality: "São Paulo", region: "SP" }
+      },
       { fsq_place_id: "closed-123", name: "Fechado", latitude: -23.5, longitude: -46.6, date_closed: "2025-01-01" }
     ] }), { status: 200, headers: { "content-type": "application/json" } });
   };
@@ -61,6 +69,7 @@ test("maps live results to display data and sends bounded, non-cached search", a
   assert.equal(requestedUrl.searchParams.get("query"), "Japanese restaurant Pinheiros");
   assert.equal(requestedUrl.searchParams.get("max_price"), "2");
   assert.equal(requestedUrl.searchParams.get("limit"), "50");
+  assert.equal(requestedUrl.searchParams.get("sort"), "RELEVANCE");
   assert.equal(requestedUrl.searchParams.get("radius"), "15000");
   assert.equal(requestOptions.cache, "no-store");
   assert.equal(requestOptions.headers.Authorization, "Bearer test-key-do-not-use");
@@ -88,6 +97,7 @@ test("accepts a selected city when no device coordinates are shared", async () =
   await searchFoursquarePlaces({ near: "Campinas, SP" });
 
   assert.equal(requestedUrl.searchParams.get("near"), "Campinas, SP");
+  assert.equal(requestedUrl.searchParams.get("sort"), "POPULARITY");
   assert.equal(requestedUrl.searchParams.has("ll"), false);
 });
 
@@ -97,3 +107,4 @@ test("surfaces rate limiting without exposing provider response details", async 
   globalThis.fetch = async () => new Response("limited", { status: 429 });
   await assert.rejects(searchFoursquarePlaces(), (error) => error.status === 429 && /limite/i.test(error.message));
 });
+
