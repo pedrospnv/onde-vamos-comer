@@ -127,7 +127,9 @@ export async function searchGooglePlaces(filters = {}) {
   }
 
   if (!response.ok) {
-    console.error("Google Places returned HTTP", response.status);
+    const failureBody = await response.json().catch(() => null);
+    const providerStatus = typeof failureBody?.error?.status === "string" ? failureBody.error.status : "UNKNOWN";
+    console.error("Google Places returned HTTP", response.status, providerStatus);
     const message = response.status === 429
       ? "A busca atingiu o limite de chamadas. Tente novamente mais tarde."
       : "O Google Places recusou a busca. Confira a chave, as restrições e o faturamento no Google Cloud.";
