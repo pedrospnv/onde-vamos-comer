@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { googleEnterpriseFieldsEnabled, isGooglePlacesConfigured, searchGooglePlaces } from "./google-places.js";
 import { isFoursquareConfigured, searchFoursquarePlaces } from "./foursquare.js";
 
 const url = process.env.SUPABASE_URL;
@@ -7,10 +8,11 @@ const supabase = url && key ? createClient(url, key, { auth: { persistSession: f
 let currentDataMode = supabase ? "openstreetmap" : "not_configured";
 
 export async function searchRestaurants(filters = {}) {
-  if (isFoursquareConfigured()) return searchFoursquarePlaces(filters);
+  if (isGooglePlacesConfigured()) return searchGooglePlaces(filters);
+  if (isFoursquareConfigured()) return { items: await searchFoursquarePlaces(filters), nextPageToken: null };
   if (!supabase) {
     currentDataMode = "not_configured";
-    return [];
+    return { items: [], nextPageToken: null };
   }
 
   const { data, error } = await supabase.rpc("search_restaurants", {
@@ -29,9 +31,15 @@ export async function searchRestaurants(filters = {}) {
   }
 
   currentDataMode = "openstreetmap";
-  return data || [];
+  return { items: data || [], nextPageToken: null };
 }
 
 export async function dataMode() {
+  if (isGooglePlacesConfigured()) return "google";
   return isFoursquareConfigured() ? "foursquare" : currentDataMode;
 }
+
+export async function isGoogleEnterpriseEnabled() {
+  return isGooglePlacesConfigured() && googleEnterpriseFieldsEnabled();
+}
+

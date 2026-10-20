@@ -317,6 +317,7 @@ main {
 .filter-box label { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 8px; font-size: 12px; font-weight: 600; }
 .filter-box label > span { display: flex; align-items: center; gap: 7px; color: #5d6c62; }
 .filter-box label > span svg { color: var(--green); }
+.filter-note { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
 
 .filter-box select, .filter-box > label > input, .money-input {
   width: 100%;
@@ -755,3 +756,4 @@ footer small a { color: var(--green); text-decoration: underline; text-underline
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
+
