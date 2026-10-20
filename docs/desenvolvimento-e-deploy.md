@@ -15,8 +15,10 @@ Aplique as migrações em ordem cronológica:
 
 1. `202610170001_initial_schema.sql`
 2. `202610180001_restaurant_search_pagination.sql`
+3. `20261018114537_verified_restaurants_only.sql`
+4. `20261020212737_curated_restaurant_catalog.sql`
 
-Depois, execute manualmente a importação documentada em [Dados e importação](dados-e-importacao.md).
+O catálogo curado é criado e semeado pela quarta migração. O importador OSM é separado e opcional; veja [Dados e curadoria](dados-e-importacao.md).
 
 ## Render
 
@@ -25,7 +27,7 @@ O serviço web atual está em [onde-vamos-comer.onrender.com](https://onde-vamos
 - **Build command:** `npm ci && npm run build`
 - **Start command:** `npm start`
 - **Runtime:** Node.js 22.12 ou superior
-- **Variáveis de produção:** `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` e `FOURSQUARE_API_KEY`. O Google fica desligado por padrão; só é ativado quando `GOOGLE_PLACES_ENABLED=true` e `GOOGLE_PLACES_API_KEY` estão definidos. Também podem ser configurados `GOOGLE_PLACES_INCLUDE_ENTERPRISE_FIELDS`, `OPENAI_API_KEY`, `OPENAI_MODEL` e `WEB_ORIGIN`.
+- **Variáveis de produção:** `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` e `RESTAURANT_DATA_SOURCE=curated`. Foursquare e Google só são chamados quando sua fonte é explicitamente selecionada; também exigem suas chaves. Google ainda exige `GOOGLE_PLACES_ENABLED=true`. `OPENAI_API_KEY` é opcional e não é necessária para buscar dados. `WEB_ORIGIN` só é necessário se o front-end mudar de domínio.
 - **Não adicione** `SUPABASE_SERVICE_ROLE_KEY` ao serviço web.
 - Não configure uma chave Google no Render se a intenção é manter a integração desligada. Uma chave sozinha não ativa chamadas; elas só ocorrem com `GOOGLE_PLACES_ENABLED=true`. O Google Places exige faturamento ativo e pode gerar custos.
 - Para habilitar avaliações e faixa geral de preço, defina `GOOGLE_PLACES_INCLUDE_ENTERPRISE_FIELDS=true` somente após conferir os custos e cotas do Google Cloud. Fotos não estão habilitadas nesta integração.
@@ -35,7 +37,7 @@ O Render injeta `PORT`. Como o app e a API usam a mesma origem, `WEB_ORIGIN` nã
 ## Verificações do repositório
 
 - `npm run check:api` executa `node --check` nos módulos da API e importador.
-- `npm test` exercita as integrações Google Places e Foursquare com respostas simuladas.
+- `npm test` exercita mapeamento do catálogo, cálculo de distância e integrações Google Places/Foursquare com respostas simuladas.
 - `npm run build` executa a verificação acima e compila o Vue/Vite para `apps/web/dist`.
 - Os testes não fazem chamadas externas nem validam uma chave real.
 

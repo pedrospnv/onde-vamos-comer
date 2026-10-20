@@ -19,7 +19,7 @@ const CURATED_COORDINATES = {
   "cantina-casteloes": { lat: -23.5444475, lng: -46.6214891 }
 };
 
-function distanceKm(origin, destination) {
+export function distanceKm(origin, destination) {
   const radians = (degrees) => degrees * Math.PI / 180;
   const latitudeDelta = radians(destination.lat - origin.lat);
   const longitudeDelta = radians(destination.lng - origin.lng);
@@ -29,7 +29,7 @@ function distanceKm(origin, destination) {
   return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-function mapCuratedRestaurant(row, origin = null) {
+export function mapCuratedRestaurant(row, origin = null) {
   const photos = Array.isArray(row.curated_restaurant_photos) ? row.curated_restaurant_photos : [];
   const menuItems = Array.isArray(row.curated_menu_items) ? row.curated_menu_items : [];
   const photo = photos.find((item) => item.is_primary) || photos[0] || null;
@@ -69,7 +69,7 @@ function mapCuratedRestaurant(row, origin = null) {
     distance_km: origin && coordinates ? distanceKm(origin, coordinates) : null,
     tags: [],
     image_url: photo?.image_url || null,
-    image_alt: `Foto de ${row.name}`,
+    image_alt: `Imagem associada à ficha de ${row.name}`,
     image_attribution: photo?.attribution || null,
     image_source_url: photo?.source_page_url || null,
     image_license: photo?.license_name || null,

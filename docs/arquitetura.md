@@ -2,63 +2,44 @@
 
 ## Visão geral
 
-O front-end Vue é compilado pelo Vite e servido pelo mesmo processo Express que expõe a API. A busca de lugares e a leitura da base passam pelo servidor; o navegador não recebe a chave administrativa do Supabase.
+O front-end Vue é compilado pelo Vite e servido pelo processo Express que também expõe a API. No modo padrão, a API lê o catálogo curado do Supabase. Nenhuma chave administrativa do Supabase chega ao navegador.
 
 ```mermaid
 flowchart LR
   U[Pessoa no navegador] -->|Vue e HTTPS| E[Express no Render]
-  E -->|RPC search_restaurants| S[(Supabase Postgres + PostGIS)]
-  E -->|busca ao vivo sem persistência| F[Foursquare Places API]
-  E -->|busca ao vivo sem persistência| G[Google Places API]
-  E -->|interpretação opcional| O[OpenAI Responses API]
-  O -->|filtros estruturados| E
-  E -->|resultados| U
-  X[Importador local] -->|consulta| P[OpenStreetMap / Overpass]
-  X -->|upsert com chave administrativa| S
-  U -->|favoritos no dispositivo| L[localStorage]
+  E -->|leitura com RLS| S[(Supabase · catálogo curado)]
+  E -. opcional .-> F[Foursquare Places]
+  E -. opcional .-> G[Google Places]
+  E -. opcional .-> O[OpenAI Responses API]
+  X[Importador local] -->|OpenStreetMap / Overpass| L[(Tabela OSM legada)]
+  U -->|favoritos locais| B[localStorage]
 ```
 
 ## Componentes
 
-### Front-end
-
-- `apps/web/src/App.vue` contém a tela de busca, filtros, resultados, favoritos e detalhes.
-- `apps/web/src/style.css` define cores, tipografia, componentes e pontos de quebra para telas pequenas, médias e grandes.
-- `apps/web/index.html` define o idioma, metadados e fontes.
-- O Vite encaminha `/api` para `http://localhost:3000` no desenvolvimento. Em produção, Express serve `apps/web/dist` e as rotas `/api` no mesmo domínio.
-
-### API
-
-- `apps/api/src/server.js` configura Express, Helmet, CORS, limites de requisição, validação de entradas e endpoints.
-- `apps/api/src/restaurants.js` prioriza Google Places quando `GOOGLE_PLACES_API_KEY` existe; usa Foursquare como reserva e Supabase quando nenhuma fonte externa está configurada.
-- `apps/api/src/foursquare.js` normaliza os resultados temporários da API externa.
-- `apps/api/src/google-places.js` consulta e normaliza os resultados do Google Places sem armazená-los.
-- `apps/api/src/ai.js` extrai culinária, orçamento e texto livre. Usa regras locais se a chave da OpenAI não estiver configurada ou se a chamada falhar.
-- O modelo não escolhe nem inventa restaurantes. A lista vem do Supabase ou da fonte externa ativa.
-
-### Banco de dados
-
-- `public.restaurants` guarda os lugares, coordenadas PostGIS, metadados da fonte e estado de publicação.
-- RLS permite leitura anônima apenas de restaurantes publicados, completos e verificados nos últimos 180 dias.
-- A função `public.search_restaurants` aplica os mesmos critérios, além de filtros textuais, geográficos, de culinária e orçamento e paginação.
-- A chave `SUPABASE_SERVICE_ROLE_KEY` só é necessária no script de importação e não deve ser colocada no serviço web.
+- `apps/web/src/App.vue`: busca, filtros, seleção, favoritos e detalhe dos restaurantes.
+- `apps/web/src/style.css`: identidade visual, pontos de quebra e acessibilidade visual.
+- `apps/api/src/server.js`: Express, Helmet, CORS, limites de requisição, validação e rotas.
+- `apps/api/src/restaurants.js`: leitura do catálogo curado por padrão; integrações externas apenas quando `RESTAURANT_DATA_SOURCE` seleciona um provedor.
+- `apps/api/src/ai.js`: interpreta a frase localmente; pode usar OpenAI se houver chave no servidor.
+- `supabase/migrations/20261020212737_curated_restaurant_catalog.sql`: estrutura e semente inicial do catálogo curado.
+- `scripts/import-openstreetmap.js`: importador da tabela OSM legada, não do catálogo curado.
 
 ## Fluxo da busca
 
-1. A tela envia os filtros para `GET /api/restaurants` ou a frase para `POST /api/recommend`.
-2. A API valida os dados e, se necessário, interpreta a frase.
-3. A API consulta Google Places em tempo real, Foursquare como reserva, ou chama `search_restaurants` no Supabase.
-4. A busca de provedores ao vivo usa coordenadas para solicitar locais próximos; o catálogo curado calcula a distância em linha reta a partir das coordenadas dos restaurantes.
-5. Nas fontes externas, a interface identifica o provedor e mantém o preço por pessoa vazio; no modo Supabase, aplica a curadoria dos dados próprios.
+1. O navegador pede `/api/restaurants` ou `/api/recommend` no mesmo domínio.
+2. A API valida a entrada e interpreta a frase com regras locais; OpenAI é opcional.
+3. No padrão `curated`, a API lê fichas publicadas e revisadas nos últimos 180 dias e combina fotos e itens de menu.
+4. A API calcula distância em linha reta somente para locais com coordenadas cadastradas. Sem coordenadas, a distância fica nula.
+5. O front-end distingue preço por pessoa de valores de itens do menu, exibe fontes e sinaliza dados ausentes.
 
-Na primeira visita, um aviso oferece usar a localização atual, buscar por bairro ou continuar sem ela. O navegador só solicita o GPS depois do clique. Se autorizada, a localização é usada na busca e não fica salva pelo app. A pessoa também pode digitar uma cidade ou bairro nos filtros, ou alterar a localização pelo cabeçalho. Favoritos próprios ficam no `localStorage`; favoritos das fontes externas permanecem apenas na sessão.
+Na primeira visita, a interface oferece permitir GPS, buscar por bairro ou continuar sem localização. O navegador só pede localização após um clique. O app usa as coordenadas para a busca e não as grava. Favoritos ficam no `localStorage` deste dispositivo.
 
-## Segurança e privacidade
+## Segurança
 
-- A chave administrativa do Supabase fica fora do front-end e fora do deploy web.
-- A API valida parâmetros com Zod e limita o tamanho do corpo JSON.
-- Helmet adiciona cabeçalhos de segurança; CORS usa as origens configuradas em `WEB_ORIGIN`.
-- A API limita chamadas gerais a 60 por minuto por origem e `/api/recommend` a 10 por minuto.
-- Sem login, o app não mantém perfis ou favoritos em servidor.
-- Se a integração OpenAI for habilitada, somente a frase digitada é enviada para extrair filtros. Coordenadas de localização são enviadas à API do próprio app para a busca geográfica, não à chamada da OpenAI.
-- As chaves dos provedores permanecem no servidor. Respostas do Google e Foursquare são entregues com `Cache-Control: no-store`; as páginas `/privacidade` e `/termos` descrevem fontes, atribuição e tratamento dos dados.
+- RLS limita a leitura do catálogo a fichas publicadas e verificadas recentemente.
+- `SUPABASE_SERVICE_ROLE_KEY` é apenas para operação administrativa local; nunca use no cliente ou no serviço web.
+- Helmet aplica cabeçalhos de segurança; Zod valida parâmetros e corpos; rate limits limitam as rotas.
+- Chaves de Google, Foursquare e OpenAI permanecem no servidor. As integrações externas estão desligadas no modo `curated`.
+- Se OpenAI for habilitada, recebe a frase para extrair filtros; a busca de restaurantes continua sendo feita pelo provedor de dados ativo.
+- As páginas `/privacidade` e `/termos` descrevem o tratamento de dados do navegador e as fontes externas opcionais.
