@@ -188,7 +188,12 @@ const CURATED_PLACES = {
     cuisine: "Chinesa",
     description: "Restaurante chinês com cardápio de pratos quentes, massas e opções para compartilhar.",
     website_url: "https://ronghe.com.br/",
-    menu_url: "https://ronghe.com.br/cardapio/"
+    menu_url: "https://ronghe.com.br/cardapio/",
+    image_url: "https://upload.wikimedia.org/wikipedia/commons/9/9d/Macarrao_Apimentafo_Com_Frutos_Do_Mar_%40_Rong_He_%287192360992%29.jpg",
+    image_attribution: "Wagner Tamanaha · “Macarrão apimentado com frutos do mar @ Rong He” · CC BY-SA 2.0",
+    image_source_url: "https://commons.wikimedia.org/wiki/File:Macarrao_Apimentafo_Com_Frutos_Do_Mar_%40_Rong_He_%287192360992%29.jpg",
+    image_license_name: "CC BY-SA 2.0",
+    image_license_url: "https://creativecommons.org/licenses/by-sa/2.0/"
   },
   insalata: {
     cuisine: "Contemporânea",
