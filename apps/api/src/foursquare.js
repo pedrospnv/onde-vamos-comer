@@ -1,3 +1,5 @@
+import { enrichRestaurant } from "./restaurant-enrichment.js";
+
 const API_URL = "https://places-api.foursquare.com/places/search";
 const API_VERSION = "2025-06-17";
 const CUISINE_QUERIES = new Map([
@@ -10,6 +12,7 @@ const CUISINE_QUERIES = new Map([
 ]);
 const PRICE_LABELS = new Map([[1, "Econômico"], [2, "Moderado"], [3, "Caro"], [4, "Muito caro"]]);
 const DINING_CATEGORY = /restaurant|dining|food|coffee|caf[eé]|bar|pub|brewery|bakery|dessert|ice cream|pizzeria|pizza|burger|tea house|diner|fast food|bistro|snack|juice bar/i;
+const NON_DINING_CATEGORY = /supermarket|grocery store|convenience store|grocery market/i;
 
 export function isFoursquareConfigured() {
   return Boolean(process.env.FOURSQUARE_API_KEY?.trim());
@@ -35,9 +38,10 @@ function categoryLabel(categories = []) {
 }
 
 function isDiningPlace(categories = []) {
-  return Array.isArray(categories) && categories.some((category) =>
-    typeof category?.name === "string" && DINING_CATEGORY.test(category.name)
-  );
+  if (!Array.isArray(categories)) return false;
+  const names = categories.map((category) => category?.name).filter((name) => typeof name === "string");
+  return !names.some((name) => NON_DINING_CATEGORY.test(name))
+    && names.some((name) => DINING_CATEGORY.test(name));
 }
 
 function photoUrl(photo) {
@@ -77,7 +81,7 @@ function mapPlace(place, origin) {
   const flags = Array.isArray(place.unresolved_flags) ? place.unresolved_flags : [];
   if (!isDiningPlace(place.categories) || place.date_closed || flags.some((flag) => blockedFlags.has(String(flag).toLowerCase()))) return null;
 
-  return {
+  return enrichRestaurant(place, {
     id: `fsq:${fsqId}`,
     fsq_place_id: fsqId,
     name,
@@ -108,7 +112,7 @@ function mapPlace(place, origin) {
     verified_at: null,
     source_updated_at: place.date_refreshed || null,
     open_now: typeof place.hours?.open_now === "boolean" ? place.hours.open_now : null
-  };
+  });
 }
 
 function distanceKm(lat1, lng1, lat2, lng2) {
