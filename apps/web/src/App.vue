@@ -251,7 +251,7 @@ onMounted(async () => {
         <div class="hero-copy">
           <div class="eyebrow"><MapPin :size="14" /> UM GUIA LOCAL DE SÃO PAULO</div>
           <h1>Boa comida.<br /><em>Boa escolha.</em></h1>
-          <p v-if="mode === 'google'">Descubra restaurantes por culinária e bairro. Confira preços, cardápios e funcionamento no perfil oficial do estabelecimento.</p>\n          <p v-else>Descubra lugares para comer por culinária, distância e orçamento. Informações ausentes ficam claras, sem preço ou avaliação inventados.</p>
+          <p v-if="mode === 'google'">Descubra restaurantes por culinária e bairro. Confira preços, cardápios e funcionamento no perfil oficial do estabelecimento.</p><p v-else>Descubra lugares para comer por culinária, distância e orçamento. Informações ausentes ficam claras, sem preço ou avaliação inventados.</p>
         </div>
         <div class="hero-food">
           <img src="/images/japonesa.webp" alt="Sushi e sashimi, imagem ilustrativa de culinária japonesa" fetchpriority="high" />
