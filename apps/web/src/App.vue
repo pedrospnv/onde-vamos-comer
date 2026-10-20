@@ -3,7 +3,7 @@ import { computed, onMounted, ref, watch } from "vue";
 import { ArrowRight, ArrowUpRight, Check, ChevronDown, Clock3, Compass, Heart, MapPin, MessageCircle, Search, SlidersHorizontal, Star, Utensils, Wallet, X } from "@lucide/vue";
 
 const items = ref([]);
-const busy = ref(false);
+const busy = ref(true);
 const hasMore = ref(false);
 const nextPageToken = ref(null);
 const error = ref("");
