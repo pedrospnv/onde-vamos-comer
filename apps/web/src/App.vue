@@ -214,8 +214,12 @@ function useTypedLocation() {
 }
 
 function mapsUrl(item) {
-  if (item.lat == null || item.lng == null) return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(item.address || item.name);
-  return "https://www.google.com/maps/search/?api=1&query=" + item.lat + "," + item.lng;
+  const name = typeof item?.name === "string" ? item.name.trim() : "";
+  const address = typeof item?.address === "string" ? item.address.trim() : "";
+  const coordinates = item?.lat != null && item?.lng != null ? `${item.lat},${item.lng}` : "";
+  const query = [name, address].filter(Boolean).join(", ") || coordinates || "São Paulo, SP";
+  const params = new URLSearchParams({ api: "1", query });
+  return `https://www.google.com/maps/search/?${params.toString()}`;
 }
 
 function quickSearch(text) { query.value = text; interpretedQuery.value = false; searchByDescription(); }
