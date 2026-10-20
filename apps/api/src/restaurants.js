@@ -8,8 +8,8 @@ const supabase = url && key ? createClient(url, key, { auth: { persistSession: f
 let currentDataMode = supabase ? "openstreetmap" : "not_configured";
 
 export async function searchRestaurants(filters = {}) {
-  if (isGooglePlacesConfigured()) return searchGooglePlaces(filters);
   if (isFoursquareConfigured()) return { items: await searchFoursquarePlaces(filters), nextPageToken: null };
+  if (isGooglePlacesConfigured()) return searchGooglePlaces(filters);
   if (!supabase) {
     currentDataMode = "not_configured";
     return { items: [], nextPageToken: null };
@@ -35,8 +35,8 @@ export async function searchRestaurants(filters = {}) {
 }
 
 export async function dataMode() {
-  if (isGooglePlacesConfigured()) return "google";
-  return isFoursquareConfigured() ? "foursquare" : currentDataMode;
+  if (isFoursquareConfigured()) return "foursquare";
+  return isGooglePlacesConfigured() ? "google" : currentDataMode;
 }
 
 export async function isGoogleEnterpriseEnabled() {
