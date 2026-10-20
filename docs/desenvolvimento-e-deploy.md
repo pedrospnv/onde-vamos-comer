@@ -25,9 +25,9 @@ O serviço web atual está em [onde-vamos-comer.onrender.com](https://onde-vamos
 - **Build command:** `npm ci && npm run build`
 - **Start command:** `npm start`
 - **Runtime:** Node.js 22.12 ou superior
-- **Variáveis de produção:** `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `GOOGLE_PLACES_API_KEY` para priorizar a busca ao vivo e, opcionalmente, `FOURSQUARE_API_KEY`, `GOOGLE_PLACES_INCLUDE_ENTERPRISE_FIELDS`, `OPENAI_API_KEY`, `OPENAI_MODEL` e `WEB_ORIGIN`.
+- **Variáveis de produção:** `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` e `FOURSQUARE_API_KEY`. O Google fica desligado por padrão; só é ativado quando `GOOGLE_PLACES_ENABLED=true` e `GOOGLE_PLACES_API_KEY` estão definidos. Também podem ser configurados `GOOGLE_PLACES_INCLUDE_ENTERPRISE_FIELDS`, `OPENAI_API_KEY`, `OPENAI_MODEL` e `WEB_ORIGIN`.
 - **Não adicione** `SUPABASE_SERVICE_ROLE_KEY` ao serviço web.
-- Configure `GOOGLE_PLACES_API_KEY` como segredo no Render. O Google Places tem prioridade sobre Foursquare; resultados não são persistidos. A API Google exige billing ativo no projeto.
+- Não configure uma chave Google no Render se a intenção é manter a integração desligada. Uma chave sozinha não ativa chamadas; elas só ocorrem com `GOOGLE_PLACES_ENABLED=true`. O Google Places exige faturamento ativo e pode gerar custos.
 - Para habilitar avaliações e faixa geral de preço, defina `GOOGLE_PLACES_INCLUDE_ENTERPRISE_FIELDS=true` somente após conferir os custos e cotas do Google Cloud. Fotos não estão habilitadas nesta integração.
 
 O Render injeta `PORT`. Como o app e a API usam a mesma origem, `WEB_ORIGIN` não é necessário no deploy atual. Configure-o se a API passar a aceitar chamadas do front-end em outro domínio. Para desenvolvimento local, o padrão é `http://localhost:5173`.
@@ -40,4 +40,3 @@ O Render injeta `PORT`. Como o app e a API usam a mesma origem, `WEB_ORIGIN` nã
 - Os testes não fazem chamadas externas nem validam uma chave real.
 
 Após alteração de interface, revisar em viewport desktop e em pelo menos 390×844 e 320×740. Antes de publicar mudanças de código, executar `npm run build` e validar a busca, filtros, localização, favoritos, detalhes e paginação no deploy de preview ou produção.
-

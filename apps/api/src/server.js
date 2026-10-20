@@ -7,7 +7,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import { interpretRequest } from "./ai.js";
-import { dataMode, isGoogleEnterpriseEnabled, searchRestaurants } from "./restaurants.js";
+import { dataMode, getCuratedRestaurant, isGoogleEnterpriseEnabled, searchRestaurants } from "./restaurants.js";
 import { isGooglePlacesConfigured } from "./google-places.js";
 import { isFoursquareConfigured, parseFoursquarePhotoUrl } from "./foursquare.js";
 
@@ -94,8 +94,39 @@ app.get("/api/restaurants", restaurantSearchLimit, async (req, res, next) => {
     const result = await searchRestaurants(parsed.data);
     const items = result.items;
     const mode = await dataMode();
-    res.set("Cache-Control", mode === "foursquare" || mode === "google" ? "no-store" : "private, no-cache");
-    res.json({ items, count: items.length, hasMore: mode === "google" ? Boolean(result.nextPageToken) : mode === "foursquare" ? false : items.length === (parsed.data.limit ?? 50), nextPageToken: result.nextPageToken, dataMode: mode });
+    res.set("Cache-Control", ["foursquare", "google"].includes(mode) ? "no-store" : "private, no-cache");
+    const hasMore = mode === "google"
+      ? Boolean(result.nextPageToken)
+      : mode === "foursquare"
+        ? false
+        : result.total != null
+          ? (parsed.data.offset ?? 0) + items.length < result.total
+          : items.length === (parsed.data.limit ?? 50);
+    res.json({ items, count: result.total ?? items.length, hasMore, nextPageToken: result.nextPageToken, dataMode: mode });
+  } catch (error) { next(error); }
+});
+
+app.get("/api/catalog/restaurants", restaurantSearchLimit, async (req, res, next) => {
+  const parsed = filtersSchema.safeParse(req.query);
+  if (!parsed.success) return res.status(400).json({ error: "Filtros inválidos." });
+  try {
+    if (await dataMode() !== "curated") return res.status(503).json({ error: "O catálogo próprio ainda não está configurado." });
+    const result = await searchRestaurants(parsed.data);
+    const offset = parsed.data.offset ?? 0;
+    res.set("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+    res.json({ items: result.items, count: result.total, hasMore: offset + result.items.length < result.total, offset, limit: parsed.data.limit ?? 50 });
+  } catch (error) { next(error); }
+});
+
+app.get("/api/catalog/restaurants/:slug", async (req, res, next) => {
+  const slug = String(req.params.slug || "");
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) return res.status(400).json({ error: "Identificador de restaurante inválido." });
+  try {
+    if (await dataMode() !== "curated") return res.status(503).json({ error: "O catálogo próprio ainda não está configurado." });
+    const item = await getCuratedRestaurant(slug);
+    if (!item) return res.status(404).json({ error: "Restaurante não encontrado no catálogo." });
+    res.set("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+    res.json({ item });
   } catch (error) { next(error); }
 });
 
@@ -125,7 +156,9 @@ app.post("/api/recommend", aiLimit, async (req, res, next) => {
     const items = result.items;
     const mode = await dataMode();
     res.set("Cache-Control", mode === "foursquare" || mode === "google" ? "no-store" : "private, no-cache");
-    const budgetNotice = mode === "foursquare" && filters.maxBudget != null
+    const budgetNotice = mode === "curated" && filters.maxBudget != null
+      ? "O catálogo lista preços de pratos e combos, mas não estima gasto por pessoa. Confira o cardápio e confirme o valor com o restaurante."
+      : mode === "foursquare" && filters.maxBudget != null
       ? "A faixa de preço do Foursquare é geral e não equivale a um valor em reais por pessoa."
       : mode === "google" && filters.maxBudget != null
         ? "O Google não informa preço por pessoa em reais nesta configuração. Confira os valores no perfil ou cardápio do restaurante."
@@ -158,4 +191,3 @@ app.use((error, _req, res, _next) => {
 });
 
 app.listen(port, "0.0.0.0", () => console.log("API disponível na porta " + port));
-

@@ -113,4 +113,3 @@ Os testes usam respostas simuladas e não substituem uma validação ao vivo com
 ## Créditos dos dados
 
 © OpenStreetMap contributors. Dados sob [Open Database License (ODbL)](https://opendatacommons.org/licenses/odbl/). A aplicação mantém a atribuição visível e oferece links para os registros de origem.
-

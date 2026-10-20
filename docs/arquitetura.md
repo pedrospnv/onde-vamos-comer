@@ -48,10 +48,10 @@ flowchart LR
 1. A tela envia os filtros para `GET /api/restaurants` ou a frase para `POST /api/recommend`.
 2. A API valida os dados e, se necessário, interpreta a frase.
 3. A API consulta Google Places em tempo real, Foursquare como reserva, ou chama `search_restaurants` no Supabase.
-4. O PostGIS calcula a distância quando latitude e longitude foram fornecidas.
+4. A busca de provedores ao vivo usa coordenadas para solicitar locais próximos; o catálogo curado calcula a distância em linha reta a partir das coordenadas dos restaurantes.
 5. Nas fontes externas, a interface identifica o provedor e mantém o preço por pessoa vazio; no modo Supabase, aplica a curadoria dos dados próprios.
 
-Ao selecionar **Alterar**, o navegador solicita permissão de localização. Se autorizada, as coordenadas são usadas na busca ao vivo; o app não as grava. A pessoa também pode digitar uma cidade ou bairro nos filtros. Favoritos próprios ficam no `localStorage`; favoritos das fontes externas permanecem apenas na sessão.
+Na primeira visita, um aviso oferece usar a localização atual, buscar por bairro ou continuar sem ela. O navegador só solicita o GPS depois do clique. Se autorizada, a localização é usada na busca e não fica salva pelo app. A pessoa também pode digitar uma cidade ou bairro nos filtros, ou alterar a localização pelo cabeçalho. Favoritos próprios ficam no `localStorage`; favoritos das fontes externas permanecem apenas na sessão.
 
 ## Segurança e privacidade
 
@@ -62,4 +62,3 @@ Ao selecionar **Alterar**, o navegador solicita permissão de localização. Se 
 - Sem login, o app não mantém perfis ou favoritos em servidor.
 - Se a integração OpenAI for habilitada, somente a frase digitada é enviada para extrair filtros. Coordenadas de localização são enviadas à API do próprio app para a busca geográfica, não à chamada da OpenAI.
 - As chaves dos provedores permanecem no servidor. Respostas do Google e Foursquare são entregues com `Cache-Control: no-store`; as páginas `/privacidade` e `/termos` descrevem fontes, atribuição e tratamento dos dados.
-

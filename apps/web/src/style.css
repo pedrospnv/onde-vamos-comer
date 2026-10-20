@@ -97,6 +97,41 @@ svg { flex: none; }
   text-underline-offset: 3px;
 }
 
+.location-prompt {
+  width: min(100% - 64px, 1160px);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 16px auto 0;
+  padding: 16px 18px;
+  border: 1px solid #dce5dc;
+  border-radius: 14px;
+  background: #f0f4ef;
+}
+
+.location-prompt-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  border-radius: 12px;
+  background: white;
+  color: var(--green);
+}
+
+.location-prompt-copy { min-width: 0; flex: 1; }
+.location-prompt-copy strong { font-size: 13px; }
+.location-prompt-copy p { margin: 4px 0 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.location-prompt-copy .location-prompt-message { color: #8a4c2d; }
+
+.location-prompt-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
+.location-prompt-actions button { min-height: 36px; padding: 7px 11px; border-radius: 999px; font-size: 11px; }
+.location-use-button { border: 1px solid var(--green); background: var(--green); color: white; font-weight: 700; }
+.location-use-button:hover { background: var(--green-dark); }
+.location-manual-button { border: 1px solid #d6e0d6; background: white; color: var(--green-dark); }
+.location-dismiss-button { border: 0; background: transparent; color: var(--muted); }
+
 .saved-button {
   min-height: 40px;
   position: relative;
@@ -636,6 +671,12 @@ footer small a { color: var(--green); text-decoration: underline; text-underline
 .modal-line svg { color: var(--green); }
 .modal-line b { color: var(--green-dark); font-size: 15px; }
 .modal-line span { color: var(--muted); }
+.menu-items { margin: 12px 0; border-top: 1px solid var(--line); }
+.menu-items h3 { margin: 12px 0 5px; font-size: 13px; }
+.menu-items article { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 11px; }
+.menu-items article div { display: grid; gap: 3px; }
+.menu-items article small { color: var(--muted); font-size: 10px; }
+.menu-items article b { flex: 0 0 auto; color: var(--green-dark); font-size: 12px; }
 .tag-list { display: flex; flex-wrap: wrap; gap: 7px; margin: 12px 0; }
 .tag-list span { padding: 5px 9px; border-radius: 999px; background: var(--green-soft); color: var(--green); font-size: 10px; }
 .modal .disclaimer { margin: 10px 0 14px; font-size: 11px; }
@@ -647,6 +688,8 @@ footer small a { color: var(--green); text-decoration: underline; text-underline
 
 @media (max-width: 900px) {
   .topbar, main, footer { width: min(100% - 40px, 760px); }
+  .location-prompt { width: min(100% - 40px, 760px); align-items: flex-start; }
+  .location-prompt-actions { max-width: 270px; }
   .hero { grid-template-columns: minmax(0, 1fr) minmax(230px, 0.8fr); gap: 28px; }
   .search-panel { margin-right: 18px; margin-left: 18px; }
   .results { padding-right: 18px; padding-left: 18px; }
@@ -657,6 +700,13 @@ footer small a { color: var(--green); text-decoration: underline; text-underline
 
 @media (max-width: 640px) {
   .topbar, main, footer { width: calc(100% - 32px); }
+  .location-prompt { width: calc(100% - 32px); flex-wrap: wrap; gap: 10px; margin-top: 12px; padding: 14px; }
+  .location-prompt-icon { width: 34px; height: 34px; }
+  .location-prompt-copy { flex: 1 1 calc(100% - 48px); }
+  .location-prompt-copy strong { font-size: 12px; }
+  .location-prompt-copy p { font-size: 10px; }
+  .location-prompt-actions { width: 100%; max-width: none; justify-content: flex-start; gap: 6px; }
+  .location-prompt-actions button { min-height: 34px; padding: 6px 9px; font-size: 10px; }
   .topbar { min-height: 64px; gap: 11px; }
   .brand { gap: 7px; font-size: 17px; }
   .brand-mark { width: 31px; height: 31px; border-radius: 10px; }
@@ -762,4 +812,3 @@ footer small a { color: var(--green); text-decoration: underline; text-underline
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
-

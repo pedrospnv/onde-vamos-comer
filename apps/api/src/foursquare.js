@@ -13,7 +13,7 @@ const CUISINE_QUERIES = new Map([
 const PRICE_LABELS = new Map([[1, "Econômico"], [2, "Moderado"], [3, "Caro"], [4, "Muito caro"]]);
 const DINING_CATEGORY = /restaurant|dining|food|coffee|caf[eé]|bar|pub|brewery|bakery|dessert|ice cream|pizzeria|pizza|burger|tea house|diner|fast food|bistro|snack|juice bar/i;
 const NON_DINING_CATEGORY = /supermarket|grocery store|convenience store|grocery market/i;
-const NON_DINING_NAME = /\\bsupermercado\\b|\\bsupermarket\\b|\\bgrocery\\b/i;
+const NON_DINING_NAME = /\bsupermercado\b|\bsupermarket\b|\bgrocery\b/i;
 
 export function isFoursquareConfigured() {
   return Boolean(process.env.FOURSQUARE_API_KEY?.trim());
